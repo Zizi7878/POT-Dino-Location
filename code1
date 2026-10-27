@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Path of Titans — Registro de Gondwa</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: #151c2c;
+            --panel-border: #232d42;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --danger-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--panel-bg);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--panel-border);
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 0.2rem;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+            padding: 1.25rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        @media (min-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr 340px;
+            }
+        }
+
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            background-color: #08111e;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            cursor: crosshair;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            aspect-ratio: 1 / 1;
+            max-height: 82vh;
+        }
+
+        .gondwa-map-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .marker {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 12px rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #fff;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+        }
+
+        .marker:hover {
+            transform: translate(-50%, -50%) scale(1.6);
+            z-index: 20;
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 82vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 0.7rem 0.8rem;
+            background-color: var(--bg-color);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        optgroup {
+            background-color: var(--panel-bg);
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        option {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .btn-upload {
+            background-color: #2e384e;
+            color: #fff;
+            padding: 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            border: 1px dashed var(--accent-color);
+            transition: background-color 0.2s;
+        }
+
+        .btn-upload:hover {
+            background-color: var(--accent-color);
+        }
+
+        .entries-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-height: 150px;
+            padding-right: 4px;
+        }
+
+        .entry-card {
+            background-color: var(--bg-color);
+            padding: 0.65rem 0.8rem;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .entry-info h4 {
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .entry-info p {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.2rem 0.4rem;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: var(--danger-color);
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            padding: 0.6rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border: 1px dashed var(--panel-border);
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Path of Titans — Registro de Gondwa</h1>
+        <p>Haz clic en cualquier ubicación del mapa para registrar el avistamiento de tu dinosaurio.</p>
+    </header>
+
+    <div class="main-container">
+        <!-- Contenedor del Mapa -->
+        <div class="map-wrapper" id="mapContainer">
+            <img src="https://i.ibb.co/3p3J862/gondwa-map.jpg" alt="Mapa de Gondwa de Path of Titans" class="gondwa-map-img" id="gondwaMapImg">
+        </div>
+
+        <!-- Panel de Control Lateral -->
+        <div class="panel">
+            <div class="form-group">
+                <label>Cargar Mapa Personalizado</label>
+                <label for="fileInput" class="btn-upload">📁 Cargar Foto de tu Dispositivo</label>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            </div>
+
+            <div class="form-group">
+                <label for="dinoSelect">Seleccionar Dinosaurio / Criatura</label>
+                <select id="dinoSelect">
+                    <optgroup label="Carnívoros Terrestres">
+                        <option value="Achillobator" data-color="#ef4444">Achillobator</option>
+                        <option value="Alioramus" data-color="#f87171">Alioramus</option>
+                        <option value="Allosaurus" data-color="#dc2626">Allosaurus</option>
+                        <option value="Ceratosaurus" data-color="#b91c1c">Ceratosaurus</option>
+                        <option value="Concavenator" data-color="#f97316">Concavenator</option>
+                        <option value="Daspletosaurus" data-color="#ea580c">Daspletosaurus</option>
+                        <option value="Deinonychus" data-color="#fb923c">Deinonychus</option>
+                        <option value="Latenivenatrix" data-color="#f59e0b">Latenivenatrix</option>
+                        <option value="Megalania" data-color="#d97706">Megalania</option>
+                        <option value="Metriacanthosaurus" data-color="#b45309">Metriacanthosaurus</option>
+                        <option value="Pycnonemosaurus" data-color="#eab308">Pycnonemosaurus</option>
+                        <option value="Sarcosuchus" data-color="#84cc16">Sarcosuchus</option>
+                        <option value="Spinosaurus" data-color="#16a34a">Spinosaurus</option>
+                        <option value="Suchomimus" data-color="#15803d">Suchomimus</option>
+                        <option value="Tyrannosaurus Rex" data-color="#991b1b">Tyrannosaurus Rex</option>
+                    </optgroup>
+                    <optgroup label="Herbívoros Terrestres">
+                        <option value="Albertaceratops" data-color="#3b82f6">Albertaceratops</option>
+                        <option value="Amargasaurus" data-color="#60a5fa">Amargasaurus</option>
+                        <option value="Anodontosaurus" data-color="#2563eb">Anodontosaurus</option>
+                        <option value="Barsboldia" data-color="#1d4ed8">Barsboldia</option>
+                        <option value="Camptosaurus" data-color="#38bdf8">Camptosaurus</option>
+                        <option value="Deinocheirus" data-color="#0284c7">Deinocheirus</option>
+                        <option value="Eotriceratops" data-color="#0369a1">Eotriceratops</option>
+                        <option value="Iguanodon" data-color="#6366f1">Iguanodon</option>
+                        <option value="Kentrosaurus" data-color="#4f46e5">Kentrosaurus</option>
+                        <option value="Lambeosaurus" data-color="#4338ca">Lambeosaurus</option>
+                        <option value="Miragaia" data-color="#818cf8">Miragaia</option>
+                        <option value="Pachycephalosaurus" data-color="#a855f7">Pachycephalosaurus</option>
+                        <option value="Stegosaurus" data-color="#9333ea">Stegosaurus</option>
+                        <option value="Struthiomimus" data-color="#c084fc">Struthiomimus</option>
+                        <option value="Styracosaurus" data-color="#7e22ce">Styracosaurus</option>
+                        <option value="Trike (Eotriceratops)" data-color="#6b21a8">Trike</option>
+                    </optgroup>
+                    <optgroup label="Voladores (Pterosaurios)">
+                        <option value="Hatzegopteryx" data-color="#ec4899">Hatzegopteryx</option>
+                        <option value="Rhamphorhynchus" data-color="#f43f5e">Rhamphorhynchus</option>
+                        <option value="Thalassodromeus" data-color="#db2777">Thalassodromeus</option>
+                    </optgroup>
+                    <optgroup label="Acuáticos / Marinos">
+                        <option value="Eurhinosaurus" data-color="#06b6d4">Eurhinosaurus</option>
+                        <option value="Kaiwhekea" data-color="#0891b2">Kaiwhekea</option>
+                        <option value="Tylosaurus" data-color="#0e7490">Tylosaurus</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="notesInput">Detalles / Crecimiento / Notas</label>
+                <input type="text" id="notesInput" placeholder="Ej. Adulto, Cerca de Impact Crater...">
+            </div>
+
+            <hr style="border-color: var(--panel-border);">
+
+            <div class="form-group" style="flex: 1;">
+                <label>Registros en Gondwa (<span id="count">0</span>)</label>
+                <div class="entries-list" id="entries"></div>
+            </div>
+
+            <button class="btn-danger" id="clearAllBtn">Borrar todos los marcadores</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mapContainer = document.getElementById('mapContainer');
+            const mapImg = document.getElementById('gondwaMapImg');
+            const fileInput = document.getElementById('fileInput');
+            const dinoSelect = document.getElementById('dinoSelect');
+            const notesInput = document.getElementById('notesInput');
+            const entriesContainer = document.getElementById('entries');
+            const countSpan = document.getElementById('count');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+
+            let entries = JSON.parse(localStorage.getItem('gondwa_pot_dino_entries')) || [];
+
+            // Cargar imagen de mapa guardada localmente si existe
+            const savedMapImage = localStorage.getItem('gondwa_custom_map_img');
+            if (savedMapImage) {
+                mapImg.src = savedMapImage;
+            }
+
+            // Manejar subida de archivo local
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const base64Image = event.target.result;
+                        mapImg.src = base64Image;
+                        localStorage.setItem('gondwa_custom_map_img', base64Image);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            function render() {
+                document.querySelectorAll('.marker').forEach(m => m.remove());
+                entriesContainer.innerHTML = '';
+
+                if (entries.length === 0) {
+                    entriesContainer.innerHTML = '<div class="empty-state">No hay avistamientos registrados. Haz clic en el mapa de Gondwa.</div>';
+                } else {
+                    entries.forEach((entry, index) => {
+                        const marker = document.createElement('div');
+                        marker.className = 'marker';
+                        marker.style.left = `${entry.x}%`;
+                        marker.style.top = `${entry.y}%`;
+                        marker.style.backgroundColor = entry.color;
+                        marker.title = `${entry.dino}${entry.notes ? `: ${entry.notes}` : ''}`;
+                        mapContainer.appendChild(marker);
+
+                        const card = document.createElement('div');
+                        card.className = 'entry-card';
+                        card.style.borderLeftColor = entry.color;
+                        card.innerHTML = `
+                            <div class="entry-info">
+                                <h4>${entry.dino}</h4>
+                                <p>X: ${entry.x.toFixed(1)}% | Y: ${entry.y.toFixed(1)}%</p>
+                                ${entry.notes ? `<p><em>"${entry.notes}"</em></p>` : ''}
+                            </div>
+                            <button class="delete-btn" data-index="${index}" title="Borrar">&times;</button>
+                        `;
+                        entriesContainer.appendChild(card);
+                    });
+                }
+
+                countSpan.textContent = entries.length;
+                localStorage.setItem('gondwa_pot_dino_entries', JSON.stringify(entries));
+            }
+
+            mapContainer.addEventListener('click', (e) => {
+                if (e.target.id === 'fileInput' || e.target.classList.contains('btn-upload')) return;
+
+                const rect = mapContainer.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+                const selectedOption = dinoSelect.options[dinoSelect.selectedIndex];
+
+                const newEntry = {
+                    dino: selectedOption.value,
+                    color: selectedOption.dataset.color || '#6366f1',
+                    x: x,
+                    y: y,
+                    notes: notesInput.value.trim(),
+                    timestamp: new Date().toISOString()
+                };
+
+                entries.push(newEntry);
+                notesInput.value = '';
+                render();
+            });
+
+            entriesContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    const index = e.target.dataset.index;
+                    entries.splice(index, 1);
+                    render();
+                }
+            });
+
+            clearAllBtn.addEventListener('click', () => {
+                if (entries.length > 0 && confirm('¿Seguro que deseas eliminar todos los registros marcados?')) {
+                    entries = [];
+                    render();
+                }
+            });
+
+            render();
+        });
+    </script>
+</body>
+</html>
