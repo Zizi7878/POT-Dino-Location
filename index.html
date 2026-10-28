@@ -11,12 +11,10 @@
             --panel-border: #232d42;
             --accent-color: #6366f1;
             --accent-hover: #4f46e5;
-            --accent-soft: rgba(99, 102, 241, 0.14);
             --text-color: #f3f4f6;
             --text-muted: #9ca3af;
             --danger-color: #ef4444;
             --danger-dark: #b91c1c;
-            --success-color: #22c55e;
             --modal-bg: rgba(4, 8, 15, 0.78);
             --shadow: rgba(0, 0, 0, 0.45);
             --discord-color: #5865F2;
@@ -130,15 +128,16 @@
 
         .map-wrapper {
             position: relative;
-            width: 100%;
+            width: min(82vmin, 960px);
+            max-width: 100%;
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
             background-color: #08111e;
             border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--panel-border);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
             user-select: none;
-            aspect-ratio: 1 / 1;
-            max-height: 82vh;
         }
 
         .map-viewport {
@@ -146,18 +145,25 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            cursor: crosshair;
+            cursor: grab;
             background: #08111e;
+            touch-action: none;
+        }
+
+        .map-viewport.dragging {
+            cursor: grabbing;
         }
 
         .gondwa-map-img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
             display: block;
             transform-origin: center center;
-            transition: transform 0.18s ease;
+            transition: transform 0.12s ease-out;
             will-change: transform;
+            user-select: none;
+            pointer-events: none;
         }
 
         .map-zoom-controls {
@@ -184,6 +190,7 @@
             color: white;
             font-size: 1.25rem;
             cursor: pointer;
+            z-index: 21;
         }
 
         .zoom-btn:hover {
@@ -674,9 +681,21 @@
             const currentUserKey = 'gondwa_current_user';
             const usersKey = 'gondwa_users';
             const minZoom = 1;
-            const maxZoom = 3;
-            const zoomStep = 0.15;
+            const maxZoom = 4;
+            const zoomStep = 0.25;
             let zoomLevel = 1;
+            let panX = 0;
+            let panY = 0;
+            let dragStartX = 0;
+            let dragStartY = 0;
+            let dragStartPanX = 0;
+            let dragStartPanY = 0;
+            let isDraggingMap = false;
+            let mapMovedDuringGesture = false;
+
+            function clamp(value, min, max) {
+                return Math.min(Math.max(value, min), max);
+            }
 
             function getUsers() {
                 try {
@@ -787,27 +806,38 @@
                 openLogin();
             }
 
-            function applyZoom() {
-                mapImg.style.transform = `scale(${zoomLevel})`;
+            function applyZoomTransform() {
+                if (zoomLevel <= 1) {
+                    panX = 0;
+                    panY = 0;
+                } else {
+                    const maxPan = (mapViewport.clientWidth * (zoomLevel - 1)) / 2;
+                    panX = clamp(panX, -maxPan, maxPan);
+                    panY = clamp(panY, -maxPan, maxPan);
+                }
+
+                mapImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
             }
 
             function zoomIn() {
                 if (zoomLevel < maxZoom) {
-                    zoomLevel = Math.min(maxZoom, Number((zoomLevel + zoomStep).toFixed(2)));
-                    applyZoom();
+                    zoomLevel = Number(Math.min(maxZoom, zoomLevel + zoomStep).toFixed(2));
+                    applyZoomTransform();
                 }
             }
 
             function zoomOut() {
                 if (zoomLevel > minZoom) {
-                    zoomLevel = Math.max(minZoom, Number((zoomLevel - zoomStep).toFixed(2)));
-                    applyZoom();
+                    zoomLevel = Number(Math.max(minZoom, zoomLevel - zoomStep).toFixed(2));
+                    applyZoomTransform();
                 }
             }
 
             function resetZoom() {
                 zoomLevel = minZoom;
-                applyZoom();
+                panX = 0;
+                panY = 0;
+                applyZoomTransform();
             }
 
             let entries = loadEntries();
@@ -852,18 +882,18 @@
                 saveEntries();
             }
 
-            mapContainer.addEventListener('click', (e) => {
+            function addMarkerAtPointer(clientX, clientY) {
                 const rect = mapImg.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                const localX = (clientX - rect.left) / rect.width;
+                const localY = (clientY - rect.top) / rect.height;
 
                 const selectedOption = dinoSelect.options[dinoSelect.selectedIndex];
 
                 const newEntry = {
                     dino: selectedOption.value,
                     color: selectedOption.dataset.color || '#6366f1',
-                    x: x,
-                    y: y,
+                    x: clamp(localX * 100, 0, 100),
+                    y: clamp(localY * 100, 0, 100),
                     notes: notesInput.value.trim(),
                     timestamp: new Date().toISOString()
                 };
@@ -871,7 +901,62 @@
                 entries.push(newEntry);
                 notesInput.value = '';
                 render();
+            }
+
+            mapContainer.addEventListener('click', (e) => {
+                if (mapMovedDuringGesture) {
+                    mapMovedDuringGesture = false;
+                    return;
+                }
+
+                const target = e.target;
+                if (target.closest('.zoom-btn') || target.closest('.delete-btn')) {
+                    return;
+                }
+
+                addMarkerAtPointer(e.clientX, e.clientY);
             });
+
+            mapViewport.addEventListener('pointerdown', (event) => {
+                if (event.target.closest('.zoom-btn')) {
+                    return;
+                }
+
+                isDraggingMap = true;
+                mapViewport.classList.add('dragging');
+                dragStartX = event.clientX;
+                dragStartY = event.clientY;
+                dragStartPanX = panX;
+                dragStartPanY = panY;
+                mapMovedDuringGesture = false;
+                mapViewport.setPointerCapture(event.pointerId);
+            });
+
+            mapViewport.addEventListener('pointermove', (event) => {
+                if (!isDraggingMap) return;
+
+                const dx = event.clientX - dragStartX;
+                const dy = event.clientY - dragStartY;
+
+                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                    mapMovedDuringGesture = true;
+                }
+
+                panX = dragStartPanX + dx;
+                panY = dragStartPanY + dy;
+                applyZoomTransform();
+            });
+
+            function endMapDrag() {
+                if (!isDraggingMap) return;
+                isDraggingMap = false;
+                mapViewport.classList.remove('dragging');
+                mapViewport.releasePointerCapture?.(event?.pointerId);
+            }
+
+            mapViewport.addEventListener('pointerup', endMapDrag);
+            mapViewport.addEventListener('pointerleave', endMapDrag);
+            mapViewport.addEventListener('pointercancel', endMapDrag);
 
             mapViewport.addEventListener('wheel', (event) => {
                 event.preventDefault();
@@ -1006,7 +1091,7 @@
                 resetZoom();
             });
 
-            applyZoom();
+            applyZoomTransform();
             updateAccountButton();
             render();
         });
