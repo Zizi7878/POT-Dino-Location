@@ -68,7 +68,16 @@ const authRateLimit = rateLimit({
   limit: 10,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
+  skipSuccessfulRequests: true,
   message: { error: 'Too many account attempts. Try again later.' }
+});
+const loginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: 'Too many login attempts. Try again later.' }
 });
 
 function hashToken(token) {
@@ -178,7 +187,7 @@ app.post('/api/auth/register', authRateLimit, async (req, res, next) => {
   }
 });
 
-app.post('/api/auth/login', authRateLimit, async (req, res, next) => {
+app.post('/api/auth/login', loginRateLimit, async (req, res, next) => {
   try {
     const username = typeof req.body.username === 'string' ? req.body.username.trim().toLowerCase() : '';
     const password = req.body.password;
