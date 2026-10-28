@@ -52,6 +52,30 @@
             text-align: center;
         }
 
+        .brand-header {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            text-align: left;
+        }
+
+        .brand-logo {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+            background: rgba(255,255,255,0.04);
+        }
+
+        .brand-copy {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
         header h1 {
             font-size: 1.5rem;
             color: #fff;
@@ -509,13 +533,38 @@
         .hidden {
             display: none !important;
         }
+
+        @media (max-width: 640px) {
+            header {
+                justify-content: center;
+            }
+
+            .header-text {
+                width: 100%;
+            }
+
+            .brand-header {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .brand-copy {
+                align-items: center;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
     <header>
         <div class="header-text">
-            <h1>Path of Titans — Registro de Gondwa</h1>
-            <p>Haz clic en cualquier ubicación del mapa para registrar el avistamiento de tu dinosaurio.</p>
+            <div class="brand-header">
+                <img src="./logo.jpg" alt="POT Dino Location logo" class="brand-logo">
+                <div class="brand-copy">
+                    <h1>Path of Titans — Registro de Gondwa</h1>
+                    <p>Haz clic en cualquier ubicación del mapa para registrar el avistamiento de tu dinosaurio.</p>
+                </div>
+            </div>
         </div>
 
         <div class="header-actions">
