@@ -714,11 +714,11 @@
             function fitMapToViewport() {
                 const naturalWidth = mapImg.naturalWidth || 1;
                 const naturalHeight = mapImg.naturalHeight || 1;
-                const maxWidth = Math.min(window.innerWidth - 72, 1200);
-                const maxHeight = Math.min(window.innerHeight - 220, 900);
-                const fitScale = Math.min(1, maxWidth / naturalWidth, maxHeight / naturalHeight);
-                const displayWidth = Math.max(220, naturalWidth * fitScale);
-                const displayHeight = Math.max(220, naturalHeight * fitScale);
+                const maxWidth = Math.min(window.innerWidth - 80, 1100);
+                const maxHeight = Math.min(window.innerHeight - 260, 850);
+                const fitScale = Math.min(0.92, maxWidth / naturalWidth, maxHeight / naturalHeight);
+                const displayWidth = Math.max(240, naturalWidth * fitScale);
+                const displayHeight = Math.max(240, naturalHeight * fitScale);
 
                 mapContainer.style.width = `${displayWidth}px`;
                 mapContainer.style.height = `${displayHeight}px`;
