@@ -506,6 +506,41 @@
       gap: 0.8rem;
     }
 
+    .account-mode-switch {
+      display: flex;
+      gap: 0.6rem;
+      margin-bottom: 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.3rem;
+      background: rgba(8,17,29,0.8);
+    }
+
+    .account-mode-btn {
+      flex: 1;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: 0.7rem 0.8rem;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .account-mode-btn.active {
+      background: rgba(124, 156, 255, 0.12);
+      border-color: rgba(124, 156, 255, 0.25);
+      color: var(--text);
+    }
+
+    .account-form {
+      display: none;
+    }
+
+    .account-form.active {
+      display: flex;
+    }
+
     .status {
       min-height: 1.2rem;
       font-size: 0.8rem;
@@ -545,6 +580,9 @@
 
       <div class="header-actions">
         <a class="btn-ghost" href="#board">Board</a>
+        <button id="createAccountBtn" class="btn-ghost" type="button">Create account</button>
+        <button id="loginAccountBtn" class="btn-ghost" type="button">Log in</button>
+        <a class="btn-ghost" href="https://discord.gg/BCmyrTVfe" target="_blank" rel="noopener noreferrer">Discord</a>
         <button id="adminButton" class="btn" type="button">Admin portal</button>
       </div>
     </div>
@@ -628,6 +666,53 @@
     </div>
   </div>
 
+  <div id="accountModal" class="modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="accountTitle">
+      <h3 id="accountTitle">Account access</h3>
+      <p>Save your map entries to your own account and load them later.</p>
+
+      <div class="account-mode-switch" aria-label="account mode switch">
+        <button type="button" class="account-mode-btn active" data-account-mode="login">Log in</button>
+        <button type="button" class="account-mode-btn" data-account-mode="create">Create account</button>
+      </div>
+
+      <form id="loginForm" class="modal-form account-form active">
+        <div class="field">
+          <label for="loginUsername">Username</label>
+          <input id="loginUsername" type="text" placeholder="Your username" required />
+        </div>
+
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" placeholder="Your password" required />
+        </div>
+
+        <button type="submit" class="btn">Log in</button>
+      </form>
+
+      <form id="createAccountForm" class="modal-form account-form">
+        <div class="field">
+          <label for="createUsername">Username</label>
+          <input id="createUsername" type="text" placeholder="Choose a username" required />
+        </div>
+
+        <div class="field">
+          <label for="createPassword">Password</label>
+          <input id="createPassword" type="password" placeholder="Choose a password" required />
+        </div>
+
+        <div class="field">
+          <label for="createConfirmPassword">Confirm password</label>
+          <input id="createConfirmPassword" type="password" placeholder="Repeat password" required />
+        </div>
+
+        <button type="submit" class="btn">Create account</button>
+      </form>
+
+      <div id="accountStatus" class="status" aria-live="polite"></div>
+    </div>
+  </div>
+
   <script>
     (function () {
       const ADMIN_EMAIL = 'zimaris.martinez@gmail.com';
@@ -635,6 +720,8 @@
       const ADMIN_EMAIL_KEY = 'pot_admin_email';
       const MAP_KEY = 'pot_dino_map_entries';
       const BOARD_KEY = 'pot_board_posts';
+      const ACCOUNTS_KEY = 'pot_accounts';
+      const ACTIVE_ACCOUNT_KEY = 'pot_active_account';
 
       const adminButton = document.getElementById('adminButton');
       const adminModal = document.getElementById('adminModal');
@@ -651,12 +738,28 @@
       const zoomInBtn = document.getElementById('zoomInBtn');
       const zoomOutBtn = document.getElementById('zoomOutBtn');
       const zoomResetBtn = document.getElementById('zoomResetBtn');
+      const accountModal = document.getElementById('accountModal');
+      const accountStatus = document.getElementById('accountStatus');
+      const createAccountBtn = document.getElementById('createAccountBtn');
+      const loginAccountBtn = document.getElementById('loginAccountBtn');
+      const loginForm = document.getElementById('loginForm');
+      const createAccountForm = document.getElementById('createAccountForm');
+      const accountModeButtons = document.querySelectorAll('.account-mode-btn');
+      const loginUsername = document.getElementById('loginUsername');
+      const loginPassword = document.getElementById('loginPassword');
+      const createUsername = document.getElementById('createUsername');
+      const createPassword = document.getElementById('createPassword');
+      const createConfirmPassword = document.getElementById('createConfirmPassword');
 
       let mapEntries = loadMapEntries();
       let boardEntries = loadBoardEntries();
       let mapZoom = 1;
 
       function normalizeEmail(value) {
+        return String(value || '').trim().toLowerCase();
+      }
+
+      function normalizeUsername(value) {
         return String(value || '').trim().toLowerCase();
       }
 
@@ -674,9 +777,44 @@
         modal.setAttribute('aria-hidden', 'true');
       }
 
-      function loadMapEntries() {
+      function getActiveAccount() {
         try {
-          const parsed = JSON.parse(localStorage.getItem(MAP_KEY) || '[]');
+          const parsed = JSON.parse(localStorage.getItem(ACTIVE_ACCOUNT_KEY) || 'null');
+          if (parsed && parsed.id && parsed.username) {
+            return parsed;
+          }
+        } catch (error) {
+          return null;
+        }
+        return null;
+      }
+
+      function setActiveAccount(account) {
+        localStorage.setItem(ACTIVE_ACCOUNT_KEY, JSON.stringify(account));
+        updateAccountButtons();
+      }
+
+      function clearActiveAccount() {
+        localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
+        updateAccountButtons();
+      }
+
+      function getAccountStorageKey(accountId) {
+        return `pot_dino_map_entries_${accountId}`;
+      }
+
+      function updateAccountButtons() {
+        const activeAccount = getActiveAccount();
+        loginAccountBtn.textContent = activeAccount ? `My account: ${activeAccount.username}` : 'Log in';
+        createAccountBtn.textContent = activeAccount ? 'Switch account' : 'Create account';
+      }
+
+      function loadMapEntries() {
+        const activeAccount = getActiveAccount();
+        const key = activeAccount ? getAccountStorageKey(activeAccount.id) : MAP_KEY;
+
+        try {
+          const parsed = JSON.parse(localStorage.getItem(key) || '[]');
           return Array.isArray(parsed) ? parsed : [];
         } catch (error) {
           return [];
@@ -684,7 +822,9 @@
       }
 
       function saveMapEntries() {
-        localStorage.setItem(MAP_KEY, JSON.stringify(mapEntries));
+        const activeAccount = getActiveAccount();
+        const key = activeAccount ? getAccountStorageKey(activeAccount.id) : MAP_KEY;
+        localStorage.setItem(key, JSON.stringify(mapEntries));
       }
 
       function loadBoardEntries() {
@@ -898,6 +1038,107 @@
         }, 350);
       }
 
+      function showAccountMode(mode) {
+        const isCreate = mode === 'create';
+        loginForm.classList.toggle('active', !isCreate);
+        createAccountForm.classList.toggle('active', isCreate);
+        accountModeButtons.forEach((button) => {
+          const active = button.dataset.accountMode === mode;
+          button.classList.toggle('active', active);
+        });
+      }
+
+      function setAccountStatus(message, type) {
+        accountStatus.textContent = message;
+        accountStatus.classList.remove('error', 'success');
+        if (type) {
+          accountStatus.classList.add(type);
+        }
+      }
+
+      function handleCreateAccount(event) {
+        event.preventDefault();
+
+        const username = String(createUsername.value || '').trim();
+        const password = String(createPassword.value || '');
+        const confirmPassword = String(createConfirmPassword.value || '');
+
+        if (!username) {
+          setAccountStatus('Please enter a username.', 'error');
+          return;
+        }
+
+        if (password.length < 4) {
+          setAccountStatus('Password must be at least 4 characters.', 'error');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          setAccountStatus('Passwords do not match.', 'error');
+          return;
+        }
+
+        const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
+        const existingAccount = accounts.find((account) => normalizeUsername(account.username) === normalizeUsername(username));
+
+        if (existingAccount) {
+          setAccountStatus('That username already exists. Please choose another one.', 'error');
+          return;
+        }
+
+        const newAccount = {
+          id: `user_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+          username,
+          password
+        };
+
+        accounts.push(newAccount);
+        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+        setActiveAccount(newAccount);
+        mapEntries = loadMapEntries();
+        renderMapMarkers();
+        renderEntriesList();
+        createAccountForm.reset();
+        setAccountStatus(`Welcome, ${username}! Your entries are now saved to your account.`, 'success');
+
+        setTimeout(() => {
+          closeModal(accountModal);
+          setAccountStatus('', '');
+        }, 700);
+      }
+
+      function handleLogin(event) {
+        event.preventDefault();
+
+        const username = String(loginUsername.value || '').trim();
+        const password = String(loginPassword.value || '');
+
+        if (!username || !password) {
+          setAccountStatus('Please enter both username and password.', 'error');
+          return;
+        }
+
+        const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
+        const matchedAccount = accounts.find((account) => normalizeUsername(account.username) === normalizeUsername(username) && account.password === password);
+
+        if (!matchedAccount) {
+          setAccountStatus('Incorrect username or password.', 'error');
+          return;
+        }
+
+        setActiveAccount(matchedAccount);
+        mapEntries = loadMapEntries();
+        renderMapMarkers();
+        renderEntriesList();
+        loginForm.reset();
+        setAccountStatus(`Logged in as ${matchedAccount.username}.`, 'success');
+
+        setTimeout(() => {
+          closeModal(accountModal);
+          setAccountStatus('', '');
+        }, 700);
+      }
+
       adminButton.addEventListener('click', () => {
         if (isAdminAuthorized()) {
           window.location.href = 'admin.html';
@@ -910,6 +1151,32 @@
       adminModal.addEventListener('click', (event) => {
         if (event.target === adminModal) closeModal(adminModal);
       });
+
+      createAccountBtn.addEventListener('click', () => {
+        showAccountMode('create');
+        openModal(accountModal);
+      });
+
+      loginAccountBtn.addEventListener('click', () => {
+        showAccountMode('login');
+        openModal(accountModal);
+      });
+
+      accountModeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          showAccountMode(button.dataset.accountMode);
+        });
+      });
+
+      accountModal.addEventListener('click', (event) => {
+        if (event.target === accountModal) {
+          closeModal(accountModal);
+          setAccountStatus('', '');
+        }
+      });
+
+      loginForm.addEventListener('submit', handleLogin);
+      createAccountForm.addEventListener('submit', handleCreateAccount);
 
       saveMarkerBtn.addEventListener('click', () => {
         const rect = mapLayer.getBoundingClientRect();
@@ -935,6 +1202,7 @@
         document.querySelector('.map-image').style.transform = 'scale(1)';
       });
 
+      updateAccountButtons();
       renderMapMarkers();
       renderEntriesList();
       renderBoard();
