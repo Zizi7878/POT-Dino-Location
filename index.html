@@ -379,7 +379,7 @@
       const createPassword = document.getElementById('createPassword');
       const createConfirmPassword = document.getElementById('createConfirmPassword');
 
-      let mapEntries = loadMapEntries();
+      let mapEntries = [];
       let mapZoom = 1;
       let mapOffsetX = 0;
       let mapOffsetY = 0;
@@ -459,9 +459,8 @@
         headerAccountStatus.textContent = hasAccount ? `Logged in as ${activeAccount.username}` : '';
       }
 
-      function loadMapEntries() {
-        const activeAccount = getActiveAccount();
-        const key = activeAccount ? getAccountStorageKey(activeAccount.id) : MAP_KEY;
+      function loadEntriesForAccount(account) {
+        const key = account ? getAccountStorageKey(account.id) : MAP_KEY;
 
         try {
           const parsed = JSON.parse(localStorage.getItem(key) || '[]');
@@ -471,10 +470,17 @@
         }
       }
 
+      function saveEntriesForAccount(account, entries) {
+        const key = account ? getAccountStorageKey(account.id) : MAP_KEY;
+        localStorage.setItem(key, JSON.stringify(entries));
+      }
+
+      function loadMapEntries() {
+        return loadEntriesForAccount(getActiveAccount());
+      }
+
       function saveMapEntries() {
-        const activeAccount = getActiveAccount();
-        const key = activeAccount ? getAccountStorageKey(activeAccount.id) : MAP_KEY;
-        localStorage.setItem(key, JSON.stringify(mapEntries));
+        saveEntriesForAccount(getActiveAccount(), mapEntries);
       }
 
       function readAccounts() {
@@ -487,6 +493,14 @@
 
       function writeAccounts(accounts) {
         localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+      }
+
+      function applyAccountSession(account) {
+        saveMapEntries();
+        setActiveAccount(account);
+        mapEntries = loadMapEntries();
+        renderMapMarkers();
+        renderEntriesList();
       }
 
       function applyMapTransform() {
@@ -646,8 +660,17 @@
       });
 
       logoutBtn.addEventListener('click', () => {
+        const activeAccount = getActiveAccount();
+        if (!activeAccount) {
+          return;
+        }
+
+        saveMapEntries();
         clearActiveAccount();
-        setAccountStatus('Logged out.', 'success');
+        mapEntries = loadEntriesForAccount(null);
+        renderMapMarkers();
+        renderEntriesList();
+        setAccountStatus('Logged out. Entries were saved to your account.', 'success');
       });
 
       loginForm.addEventListener('submit', (event) => {
@@ -669,7 +692,7 @@
         }
 
         const account = { id: storedUser.id || username, username: storedUser.username || username };
-        setActiveAccount(account);
+        applyAccountSession(account);
         setAccountStatus('Logged in successfully.', 'success');
         closeModal(accountModal);
       });
@@ -704,7 +727,7 @@
         writeAccounts(accounts);
 
         const account = { id: username, username };
-        setActiveAccount(account);
+        applyAccountSession(account);
         setAccountStatus('Account created successfully.', 'success');
         closeModal(accountModal);
       });
@@ -817,6 +840,7 @@
         }
       });
 
+      mapEntries = loadMapEntries();
       renderMapMarkers();
       renderEntriesList();
       updateAccountButtons();
