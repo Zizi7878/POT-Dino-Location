@@ -130,7 +130,7 @@
             position: relative;
             width: min(82vmin, 960px);
             max-width: calc(100vw - 2rem);
-            aspect-ratio: var(--map-aspect, 1 / 1);
+            height: auto;
             margin: 0 auto;
             background-color: #08111e;
             border-radius: 12px;
@@ -694,7 +694,7 @@
             const guestKey = 'gondwa_pot_dino_entries_guest';
             const currentUserKey = 'gondwa_current_user';
             const usersKey = 'gondwa_users';
-            const minZoom = 1;
+            const minZoom = 0.35;
             const maxZoom = 4;
             const zoomStep = 0.25;
             let zoomLevel = 1;
@@ -709,6 +709,26 @@
 
             function clamp(value, min, max) {
                 return Math.min(Math.max(value, min), max);
+            }
+
+            function fitMapToViewport() {
+                const naturalWidth = mapImg.naturalWidth || 1;
+                const naturalHeight = mapImg.naturalHeight || 1;
+                const maxWidth = Math.min(window.innerWidth - 72, 1200);
+                const maxHeight = Math.min(window.innerHeight - 220, 900);
+                const fitScale = Math.min(1, maxWidth / naturalWidth, maxHeight / naturalHeight);
+                const displayWidth = Math.max(220, naturalWidth * fitScale);
+                const displayHeight = Math.max(220, naturalHeight * fitScale);
+
+                mapContainer.style.width = `${displayWidth}px`;
+                mapContainer.style.height = `${displayHeight}px`;
+                mapViewport.style.width = `${displayWidth}px`;
+                mapViewport.style.height = `${displayHeight}px`;
+
+                zoomLevel = Number(fitScale.toFixed(3));
+                panX = 0;
+                panY = 0;
+                applyZoomTransform();
             }
 
             function getUsers() {
@@ -813,13 +833,6 @@
                 openLogin();
             }
 
-            function syncMapAspect() {
-                const naturalWidth = mapImg.naturalWidth || 1;
-                const naturalHeight = mapImg.naturalHeight || 1;
-                const aspect = naturalWidth / naturalHeight;
-                mapContainer.style.setProperty('--map-aspect', `${aspect}`);
-            }
-
             function applyZoomTransform() {
                 const imageWidth = mapImg.naturalWidth || mapViewport.clientWidth;
                 const imageHeight = mapImg.naturalHeight || mapViewport.clientHeight;
@@ -856,10 +869,7 @@
             }
 
             function resetZoom() {
-                zoomLevel = minZoom;
-                panX = 0;
-                panY = 0;
-                applyZoomTransform();
+                fitMapToViewport();
             }
 
             function updateClearButton() {
@@ -1080,10 +1090,11 @@
             zoomOutBtn.addEventListener('click', zoomOut);
             zoomResetBtn.addEventListener('click', resetZoom);
 
-            syncMapAspect();
+            mapImg.addEventListener('load', fitMapToViewport);
+            window.addEventListener('resize', fitMapToViewport);
+            fitMapToViewport();
             render();
             updateAccountButton();
-            applyZoomTransform();
         });
     </script>
 </body>
