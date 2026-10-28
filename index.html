@@ -583,7 +583,6 @@
         <button id="createAccountBtn" class="btn-ghost" type="button">Create account</button>
         <button id="loginAccountBtn" class="btn-ghost" type="button">Log in</button>
         <a class="btn-ghost" href="https://discord.gg/BCmyrTVfe" target="_blank" rel="noopener noreferrer">Discord</a>
-        <button id="adminButton" class="btn" type="button">Admin portal</button>
       </div>
     </div>
   </header>
@@ -649,23 +648,6 @@
     </aside>
   </main>
 
-  <div id="adminModal" class="modal" aria-hidden="true">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
-      <h3 id="adminTitle">Admin access</h3>
-      <p>Only the authorized email can open the admin editor.</p>
-
-      <form id="adminForm" class="modal-form">
-        <div class="field">
-          <label for="adminEmail">Email</label>
-          <input id="adminEmail" type="email" placeholder="name@example.com" required />
-        </div>
-
-        <button type="submit" class="btn">Open admin editor</button>
-        <div id="adminStatus" class="status" aria-live="polite"></div>
-      </form>
-    </div>
-  </div>
-
   <div id="accountModal" class="modal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="accountTitle">
       <h3 id="accountTitle">Account access</h3>
@@ -715,19 +697,11 @@
 
   <script>
     (function () {
-      const ADMIN_EMAIL = 'zimaris.martinez@gmail.com';
-      const ADMIN_FLAG_KEY = 'pot_admin_authorized';
-      const ADMIN_EMAIL_KEY = 'pot_admin_email';
       const MAP_KEY = 'pot_dino_map_entries';
       const BOARD_KEY = 'pot_board_posts';
       const ACCOUNTS_KEY = 'pot_accounts';
       const ACTIVE_ACCOUNT_KEY = 'pot_active_account';
 
-      const adminButton = document.getElementById('adminButton');
-      const adminModal = document.getElementById('adminModal');
-      const adminForm = document.getElementById('adminForm');
-      const adminStatus = document.getElementById('adminStatus');
-      const adminEmail = document.getElementById('adminEmail');
       const mapLayer = document.getElementById('mapLayer');
       const entriesList = document.getElementById('entriesList');
       const postList = document.getElementById('postList');
@@ -755,16 +729,8 @@
       let boardEntries = loadBoardEntries();
       let mapZoom = 1;
 
-      function normalizeEmail(value) {
-        return String(value || '').trim().toLowerCase();
-      }
-
       function normalizeUsername(value) {
         return String(value || '').trim().toLowerCase();
-      }
-
-      function isAdminAuthorized() {
-        return localStorage.getItem(ADMIN_FLAG_KEY) === 'true' && normalizeEmail(localStorage.getItem(ADMIN_EMAIL_KEY)) === normalizeEmail(ADMIN_EMAIL);
       }
 
       function openModal(modal) {
@@ -791,11 +757,6 @@
 
       function setActiveAccount(account) {
         localStorage.setItem(ACTIVE_ACCOUNT_KEY, JSON.stringify(account));
-        updateAccountButtons();
-      }
-
-      function clearActiveAccount() {
-        localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
         updateAccountButtons();
       }
 
@@ -931,30 +892,6 @@
           const actions = document.createElement('div');
           actions.className = 'post-actions';
 
-          const adminOnlyButtons = isAdminAuthorized();
-          if (adminOnlyButtons) {
-            const editBtn = document.createElement('button');
-            editBtn.type = 'button';
-            editBtn.className = 'tiny-btn';
-            editBtn.textContent = 'Edit';
-            editBtn.addEventListener('click', () => {
-              window.location.href = 'admin.html?edit=' + encodeURIComponent(post.id);
-            });
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.type = 'button';
-            deleteBtn.className = 'tiny-btn danger';
-            deleteBtn.textContent = 'Delete';
-            deleteBtn.addEventListener('click', () => {
-              boardEntries = boardEntries.filter((entry) => entry.id !== post.id);
-              saveBoardEntries();
-              renderBoard();
-              renderFeatured();
-            });
-
-            actions.append(editBtn, deleteBtn);
-          }
-
           head.append(title, actions);
 
           const text = document.createElement('p');
@@ -1013,29 +950,6 @@
         saveMapEntries();
         renderMapMarkers();
         renderEntriesList();
-      }
-
-      function handleAdminSubmit(event) {
-        event.preventDefault();
-        const email = normalizeEmail(adminEmail.value);
-
-        if (email !== normalizeEmail(ADMIN_EMAIL)) {
-          adminStatus.textContent = 'Access denied. This portal is only available for zimaris.martinez@gmail.com.';
-          adminStatus.classList.add('error');
-          adminStatus.classList.remove('success');
-          return;
-        }
-
-        localStorage.setItem(ADMIN_FLAG_KEY, 'true');
-        localStorage.setItem(ADMIN_EMAIL_KEY, ADMIN_EMAIL);
-        adminStatus.textContent = 'Access granted.';
-        adminStatus.classList.remove('error');
-        adminStatus.classList.add('success');
-
-        setTimeout(() => {
-          closeModal(adminModal);
-          window.location.href = 'admin.html';
-        }, 350);
       }
 
       function showAccountMode(mode) {
@@ -1138,19 +1052,6 @@
           setAccountStatus('', '');
         }, 700);
       }
-
-      adminButton.addEventListener('click', () => {
-        if (isAdminAuthorized()) {
-          window.location.href = 'admin.html';
-          return;
-        }
-        openModal(adminModal);
-      });
-
-      adminForm.addEventListener('submit', handleAdminSubmit);
-      adminModal.addEventListener('click', (event) => {
-        if (event.target === adminModal) closeModal(adminModal);
-      });
 
       createAccountBtn.addEventListener('click', () => {
         showAccountMode('create');
