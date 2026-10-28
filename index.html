@@ -259,8 +259,8 @@
 
         .marker {
             position: absolute;
-            width: 22px;
-            height: 22px;
+            width: 15px;
+            height: 15px;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             border: 2px solid #ffffff;
@@ -276,7 +276,7 @@
         }
 
         .marker:hover {
-            transform: translate(-50%, -50%) scale(1.6);
+            transform: translate(-50%, -50%) scale(1.2);
             z-index: 20;
         }
 
@@ -999,202 +999,116 @@
                 const rect = mapImg.getBoundingClientRect();
                 const localX = (clientX - rect.left) / rect.width;
                 const localY = (clientY - rect.top) / rect.height;
-                const selectedOption = dinoSelect.options[dinoSelect.selectedIndex];
+                const clampedX = clamp(localX * 100, 0, 100);
+                const clampedY = clamp(localY * 100, 0, 100);
 
+                const selectedOption = dinoSelect.options[dinoSelect.selectedIndex];
+                const color = selectedOption?.dataset.color || '#6366f1';
                 const newEntry = {
-                    dino: selectedOption.value,
-                    color: selectedOption.dataset.color || '#6366f1',
-                    x: clamp(localX * 100, 0, 100),
-                    y: clamp(localY * 100, 0, 100),
+                    x: clampedX,
+                    y: clampedY,
+                    dino: dinoSelect.value,
                     notes: notesInput.value.trim(),
-                    timestamp: new Date().toISOString()
+                    color
                 };
 
                 entries.push(newEntry);
-                notesInput.value = '';
                 render();
-                setStatus('Map updated. Click Save map to keep your entries.');
+                notesInput.value = '';
+                setStatus('Marcador guardado');
             }
 
-            function fitMapToViewport() {
-                const naturalWidth = mapImg.naturalWidth || 1;
-                const naturalHeight = mapImg.naturalHeight || 1;
-                const maxWidth = Math.min(window.innerWidth - 80, 1100);
-                const maxHeight = Math.min(window.innerHeight - 260, 850);
-                const fitScale = Math.min(0.92, maxWidth / naturalWidth, maxHeight / naturalHeight);
-                const displayWidth = Math.max(240, naturalWidth * fitScale);
-                const displayHeight = Math.max(240, naturalHeight * fitScale);
-
-                mapContainer.style.width = `${displayWidth}px`;
-                mapContainer.style.height = `${displayHeight}px`;
-                mapViewport.style.width = `${displayWidth}px`;
-                mapViewport.style.height = `${displayHeight}px`;
-
-                zoomLevel = Number(fitScale.toFixed(3));
-                panX = 0;
-                panY = 0;
-                applyZoomTransform();
+            function removeEntry(index) {
+                entries.splice(index, 1);
+                render();
+                setStatus('Marcador eliminado');
             }
 
-            function applyZoomTransform() {
-                const imageWidth = mapImg.naturalWidth || mapViewport.clientWidth;
-                const imageHeight = mapImg.naturalHeight || mapViewport.clientHeight;
-                const zoomedImageWidth = imageWidth * zoomLevel;
-                const zoomedImageHeight = imageHeight * zoomLevel;
-                const visibleWidth = mapViewport.clientWidth;
-                const visibleHeight = mapViewport.clientHeight;
-                const maxPanX = Math.max(0, (zoomedImageWidth - visibleWidth) / 2);
-                const maxPanY = Math.max(0, (zoomedImageHeight - visibleHeight) / 2);
-
-                if (zoomLevel <= 1) {
-                    panX = 0;
-                    panY = 0;
-                } else {
-                    panX = clamp(panX, -maxPanX, maxPanX);
-                    panY = clamp(panY, -maxPanY, maxPanY);
-                }
-
+            function updateMapTransform() {
                 mapLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
             }
 
-            function zoomIn() {
-                if (zoomLevel < maxZoom) {
-                    zoomLevel = Number(Math.min(maxZoom, zoomLevel + zoomStep).toFixed(2));
-                    applyZoomTransform();
-                }
+            function resetMapView() {
+                zoomLevel = 1;
+                panX = 0;
+                panY = 0;
+                updateMapTransform();
             }
 
-            function zoomOut() {
-                if (zoomLevel > minZoom) {
-                    zoomLevel = Number(Math.max(minZoom, zoomLevel - zoomStep).toFixed(2));
-                    applyZoomTransform();
-                }
-            }
-
-            function resetZoom() {
-                fitMapToViewport();
+            function zoomMap(direction) {
+                const nextZoom = clamp(zoomLevel + (direction * zoomStep), minZoom, maxZoom);
+                if (nextZoom === zoomLevel) return;
+                zoomLevel = nextZoom;
+                updateMapTransform();
             }
 
             function handleMapPointerDown(event) {
-                if (event.button !== 0) return;
+                if (event.target.closest('.marker')) {
+                    return;
+                }
+
                 isDraggingMap = true;
-                mapMovedDuringGesture = false;
                 dragStartX = event.clientX;
                 dragStartY = event.clientY;
                 dragStartPanX = panX;
                 dragStartPanY = panY;
+                mapMovedDuringGesture = false;
                 mapViewport.classList.add('dragging');
-                mapViewport.setPointerCapture(event.pointerId);
             }
 
             function handleMapPointerMove(event) {
                 if (!isDraggingMap) return;
+
                 const deltaX = event.clientX - dragStartX;
                 const deltaY = event.clientY - dragStartY;
-                if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
-                    mapMovedDuringGesture = true;
-                }
                 panX = dragStartPanX + deltaX;
                 panY = dragStartPanY + deltaY;
-                applyZoomTransform();
+                mapMovedDuringGesture = true;
+                updateMapTransform();
             }
 
             function handleMapPointerUp(event) {
                 if (!isDraggingMap) return;
                 isDraggingMap = false;
                 mapViewport.classList.remove('dragging');
-                if (event && typeof event.pointerId === 'number') {
-                    mapViewport.releasePointerCapture(event.pointerId);
+
+                if (!mapMovedDuringGesture && event.target === mapImg || event.target === mapViewport || event.target === mapLayer) {
+                    addMarkerAtPointer(event.clientX, event.clientY);
                 }
             }
 
-            function handleCreateAccount(event) {
-                event.preventDefault();
-                const name = document.getElementById('authName').value.trim();
-                const email = normalizeEmail(document.getElementById('createEmail').value);
-                const password = document.getElementById('createPassword').value.trim();
-
-                if (!name || !email || !password) {
-                    alert('Please complete all fields.');
-                    return;
-                }
-
-                const users = getUsers();
-                if (users[email]) {
-                    alert('An account already exists for that email.');
-                    return;
-                }
-
-                users[email] = { name, email, password, entries: loadEntriesFromStorage(userStorageKey(email)) };
-                saveUsers(users);
-                const user = { name, email, password };
-                setCurrentUser(user);
-                entries = loadEntriesFromStorage(userStorageKey(email));
-                updateAccountButton();
-                closeModal(authModal);
-                createAccountForm.reset();
-                render();
-                setStatus('Account created. Your map entries are now saved to your account.');
-            }
-
-            function handleLogin(event) {
-                event.preventDefault();
-                const email = normalizeEmail(document.getElementById('loginEmail').value);
-                const password = document.getElementById('loginPassword').value.trim();
-
-                const users = getUsers();
-                const user = users[email];
-
-                if (!user || user.password !== password) {
-                    alert('Incorrect email or password.');
-                    return;
-                }
-
-                setCurrentUser({ name: user.name, email, password });
-                entries = loadEntriesFromStorage(userStorageKey(email));
-                updateAccountButton();
-                closeModal(authModal);
-                loginForm.reset();
-                render();
-                setStatus('Welcome back! Your saved entries are loaded.');
-            }
-
-            createAccountBtn.addEventListener('click', () => {
-                openCreateAccount();
+            mapViewport.addEventListener('pointerdown', handleMapPointerDown);
+            mapViewport.addEventListener('pointermove', handleMapPointerMove);
+            window.addEventListener('pointerup', handleMapPointerUp);
+            mapViewport.addEventListener('pointerleave', () => {
+                isDraggingMap = false;
+                mapViewport.classList.remove('dragging');
             });
 
-            accountBtn.addEventListener('click', () => {
-                const user = getCurrentUser();
-                if (user) {
-                    clearCurrentUser();
-                    updateAccountButton();
-                    entries = loadEntriesFromStorage(guestKey);
-                    render();
-                    setStatus('You are signed out. Your saved account entries remain on this device.');
-                    return;
+            zoomInBtn.addEventListener('click', () => zoomMap(1));
+            zoomOutBtn.addEventListener('click', () => zoomMap(-1));
+            zoomResetBtn.addEventListener('click', resetMapView);
+
+            document.addEventListener('click', (event) => {
+                const deleteButton = event.target.closest('.delete-btn');
+                if (deleteButton) {
+                    const index = Number(deleteButton.dataset.index);
+                    if (!Number.isNaN(index)) {
+                        removeEntry(index);
+                    }
                 }
-                openLogin();
-            });
 
-            createAccountForm.addEventListener('submit', handleCreateAccount);
-            loginForm.addEventListener('submit', handleLogin);
+                const authTab = event.target.closest('.auth-tab');
+                if (authTab) {
+                    setAuthTab(authTab.dataset.authTab);
+                }
 
-            continueGuestBtn.addEventListener('click', () => {
-                clearCurrentUser();
-                entries = loadEntriesFromStorage(guestKey);
-                updateAccountButton();
-                closeModal(authModal);
-                setStatus('Guest mode is active. Your guest entries are stored locally.');
-                render();
-            });
+                if (event.target.closest('[data-close="clear"]')) {
+                    closeModal(clearModal);
+                }
 
-            saveMapBtn.addEventListener('click', () => {
-                saveEntries();
-                const user = getCurrentUser();
-                if (user && user.email) {
-                    setStatus(`Saved to ${user.email}. Your changes stay in your account.`);
-                } else {
-                    setStatus('Saved locally as guest. Log in later to keep these entries on your account.');
+                if (event.target.closest('[data-close="auth"]')) {
+                    closeModal(authModal);
                 }
             });
 
@@ -1207,57 +1121,86 @@
                 entries = [];
                 render();
                 closeModal(clearModal);
-                setStatus('All markers were removed. Save map to keep the change.');
+                setStatus('Todos los marcadores fueron eliminados');
             });
 
-            document.querySelectorAll('[data-close]').forEach((button) => {
-                button.addEventListener('click', () => {
-                    const modalType = button.dataset.close;
-                    if (modalType === 'clear') closeModal(clearModal);
-                    if (modalType === 'auth') closeModal(authModal);
-                });
+            createAccountBtn.addEventListener('click', openCreateAccount);
+            accountBtn.addEventListener('click', () => {
+                const user = getCurrentUser();
+                if (user && user.email) {
+                    clearCurrentUser();
+                    updateAccountButton();
+                    refreshEntriesFromCurrentUser();
+                    setStatus('Sesión cerrada');
+                    return;
+                }
+                openLogin();
             });
 
-            authTabs.forEach((tab) => {
-                tab.addEventListener('click', () => {
-                    setAuthTab(tab.dataset.authTab);
-                });
+            continueGuestBtn.addEventListener('click', () => {
+                clearCurrentUser();
+                updateAccountButton();
+                refreshEntriesFromCurrentUser();
+                closeModal(authModal);
+                setStatus('Continuas como invitado');
             });
 
-            mapContainer.addEventListener('click', (event) => {
-                if (event.target.closest('.zoom-btn')) return;
-                if (event.target.closest('.delete-btn')) return;
-                if (event.target.closest('.marker')) return;
-                if (isDraggingMap || mapMovedDuringGesture) return;
-                addMarkerAtPointer(event.clientX, event.clientY);
+            createAccountForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const name = document.getElementById('authName').value.trim();
+                const email = normalizeEmail(document.getElementById('createEmail').value);
+                const password = document.getElementById('createPassword').value;
+
+                if (!name || !email || !password) {
+                    setStatus('Completa todos los campos para crear la cuenta', true);
+                    return;
+                }
+
+                const users = getUsers();
+                users[email] = {
+                    name,
+                    email,
+                    password,
+                    entries: []
+                };
+                saveUsers(users);
+                setCurrentUser({ name, email, password });
+                updateAccountButton();
+                refreshEntriesFromCurrentUser();
+                createAccountForm.reset();
+                closeModal(authModal);
+                setStatus('Cuenta creada');
             });
 
-            entriesContainer.addEventListener('click', (event) => {
-                const deleteButton = event.target.closest('.delete-btn');
-                if (!deleteButton) return;
-                const index = Number(deleteButton.dataset.index);
-                if (Number.isNaN(index)) return;
-                entries.splice(index, 1);
-                render();
-                setStatus('Marker deleted. Save map to keep the change.');
+            loginForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const email = normalizeEmail(document.getElementById('loginEmail').value);
+                const password = document.getElementById('loginPassword').value;
+                const users = getUsers();
+                const user = users[email];
+
+                if (!user || user.password !== password) {
+                    setStatus('Credenciales incorrectas', true);
+                    return;
+                }
+
+                setCurrentUser({ name: user.name || 'Explorer', email, password });
+                updateAccountButton();
+                refreshEntriesFromCurrentUser();
+                loginForm.reset();
+                closeModal(authModal);
+                setStatus('Inicio de sesión correcto');
             });
 
-            mapViewport.addEventListener('pointerdown', handleMapPointerDown);
-            mapViewport.addEventListener('pointermove', handleMapPointerMove);
-            mapViewport.addEventListener('pointerup', handleMapPointerUp);
-            mapViewport.addEventListener('pointerleave', handleMapPointerUp);
-            mapViewport.addEventListener('pointercancel', handleMapPointerUp);
+            saveMapBtn.addEventListener('click', () => {
+                const storageKey = getActiveStorageKey();
+                localStorage.setItem(storageKey, JSON.stringify(entries));
+                setStatus('Mapa guardado');
+            });
 
-            zoomInBtn.addEventListener('click', zoomIn);
-            zoomOutBtn.addEventListener('click', zoomOut);
-            zoomResetBtn.addEventListener('click', resetZoom);
-
-            window.addEventListener('resize', fitMapToViewport);
-
-            updateAccountButton();
             refreshEntriesFromCurrentUser();
-            fitMapToViewport();
-            setStatus('Your map is ready.');
+            updateAccountButton();
+            updateMapTransform();
         });
     </script>
 </body>
