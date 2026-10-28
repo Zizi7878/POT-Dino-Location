@@ -148,6 +148,9 @@
             cursor: grab;
             background: #08111e;
             touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .map-viewport.dragging {
@@ -155,15 +158,26 @@
         }
 
         .gondwa-map-img {
-            width: 100%;
-            height: 100%;
             display: block;
+            width: auto;
+            height: auto;
+            max-width: none;
+            max-height: none;
+            object-fit: none;
             transform-origin: center center;
-            transition: transform 0.12s ease-out;
+            transition: transform 0.08s ease-out;
             will-change: transform;
             user-select: none;
-            pointer-events: none;
-            object-fit: fill;
+            pointer-events: auto;
+            cursor: grab;
+            -webkit-user-drag: none;
+            touch-action: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .map-viewport.dragging .gondwa-map-img {
+            cursor: grabbing;
         }
 
         .map-zoom-controls {
@@ -739,13 +753,11 @@
                 return `gondwa_pot_dino_entries_${slugify(user.email)}`;
             }
 
-            function loadEntries() {
-                try {
-                    const saved = JSON.parse(localStorage.getItem(getStorageKey())) || [];
-                    return saved;
-                } catch (error) {
-                    return [];
-                }
+            let entries = [];
+            try {
+                entries = JSON.parse(localStorage.getItem(getStorageKey())) || [];
+            } catch (error) {
+                entries = [];
             }
 
             function saveEntries() {
@@ -758,7 +770,6 @@
                     accountBtn.textContent = 'Log in';
                     return;
                 }
-
                 accountBtn.textContent = 'Log out';
             }
 
@@ -778,7 +789,6 @@
                     const active = tab.dataset.authTab === tabName;
                     tab.classList.toggle('active', active);
                 });
-
                 createAccountForm.classList.toggle('hidden', !isCreate);
                 loginForm.classList.toggle('hidden', isCreate);
             }
@@ -797,12 +807,9 @@
                 const user = getCurrentUser();
                 if (user) {
                     clearCurrentUser();
-                    entries = JSON.parse(localStorage.getItem(guestKey)) || [];
                     updateAccountButton();
-                    render();
                     return;
                 }
-
                 openLogin();
             }
 
@@ -818,7 +825,6 @@
                 const imageHeight = mapImg.naturalHeight || mapViewport.clientHeight;
                 const zoomedImageWidth = imageWidth * zoomLevel;
                 const zoomedImageHeight = imageHeight * zoomLevel;
-
                 const visibleWidth = mapViewport.clientWidth;
                 const visibleHeight = mapViewport.clientHeight;
                 const maxPanX = Math.max(0, (zoomedImageWidth - visibleWidth) / 2);
@@ -856,14 +862,12 @@
                 applyZoomTransform();
             }
 
-            let entries = loadEntries();
-
             function updateClearButton() {
                 clearAllBtn.disabled = entries.length === 0;
             }
 
             function render() {
-                document.querySelectorAll('.marker').forEach(m => m.remove());
+                document.querySelectorAll('.marker').forEach((marker) => marker.remove());
                 entriesContainer.innerHTML = '';
 
                 if (entries.length === 0) {
@@ -893,7 +897,7 @@
                     });
                 }
 
-                countSpan.textContent = entries.length;
+                countSpan.textContent = String(entries.length);
                 updateClearButton();
                 saveEntries();
             }
@@ -902,7 +906,6 @@
                 const rect = mapImg.getBoundingClientRect();
                 const localX = (clientX - rect.left) / rect.width;
                 const localY = (clientY - rect.top) / rect.height;
-
                 const selectedOption = dinoSelect.options[dinoSelect.selectedIndex];
 
                 const newEntry = {
@@ -919,24 +922,24 @@
                 render();
             }
 
-            mapContainer.addEventListener('click', (e) => {
+            mapContainer.addEventListener('click', (event) => {
                 if (mapMovedDuringGesture) {
                     mapMovedDuringGesture = false;
                     return;
                 }
 
-                const target = e.target;
+                const target = event.target;
                 if (target.closest('.zoom-btn') || target.closest('.delete-btn')) {
                     return;
                 }
 
-                addMarkerAtPointer(e.clientX, e.clientY);
+                addMarkerAtPointer(event.clientX, event.clientY);
             });
 
-            mapViewport.addEventListener('pointerdown', (event) => {
-                if (event.target.closest('.zoom-btn')) {
-                    return;
-                }
+            function beginMapDrag(event) {
+                if (event.button !== 0) return;
+                if (event.target.closest('.zoom-btn')) return;
+                if (event.target.closest('.marker')) return;
 
                 isDraggingMap = true;
                 mapViewport.classList.add('dragging');
@@ -946,9 +949,9 @@
                 dragStartPanY = panY;
                 mapMovedDuringGesture = false;
                 mapViewport.setPointerCapture(event.pointerId);
-            });
+            }
 
-            mapViewport.addEventListener('pointermove', (event) => {
+            function moveMapDrag(event) {
                 if (!isDraggingMap) return;
 
                 const dx = event.clientX - dragStartX;
@@ -961,7 +964,7 @@
                 panX = dragStartPanX + dx;
                 panY = dragStartPanY + dy;
                 applyZoomTransform();
-            });
+            }
 
             function endMapDrag(event) {
                 if (!isDraggingMap) return;
@@ -970,9 +973,16 @@
                 mapViewport.releasePointerCapture?.(event?.pointerId);
             }
 
+            mapViewport.addEventListener('pointerdown', beginMapDrag);
+            mapImg.addEventListener('pointerdown', beginMapDrag);
+            mapViewport.addEventListener('pointermove', moveMapDrag);
+            mapImg.addEventListener('pointermove', moveMapDrag);
             mapViewport.addEventListener('pointerup', endMapDrag);
+            mapImg.addEventListener('pointerup', endMapDrag);
             mapViewport.addEventListener('pointerleave', endMapDrag);
+            mapImg.addEventListener('pointerleave', endMapDrag);
             mapViewport.addEventListener('pointercancel', endMapDrag);
+            mapImg.addEventListener('pointercancel', endMapDrag);
 
             mapViewport.addEventListener('wheel', (event) => {
                 event.preventDefault();
@@ -983,9 +993,9 @@
                 }
             }, { passive: false });
 
-            entriesContainer.addEventListener('click', (e) => {
-                if (e.target.classList.contains('delete-btn')) {
-                    const index = Number(e.target.dataset.index);
+            entriesContainer.addEventListener('click', (event) => {
+                if (event.target.classList.contains('delete-btn')) {
+                    const index = Number(event.target.dataset.index);
                     entries.splice(index, 1);
                     render();
                 }
@@ -998,23 +1008,33 @@
 
             confirmDeleteBtn.addEventListener('click', () => {
                 entries = [];
-                closeModal(clearModal);
                 render();
+                closeModal(clearModal);
             });
 
-            document.querySelectorAll('[data-close="clear"]').forEach((el) => {
-                el.addEventListener('click', () => closeModal(clearModal));
-            });
-
-            document.querySelectorAll('[data-close="auth"]').forEach((el) => {
-                el.addEventListener('click', () => closeModal(authModal));
+            document.querySelectorAll('[data-close]').forEach((element) => {
+                element.addEventListener('click', () => {
+                    const modalName = element.dataset.close;
+                    if (modalName === 'clear') closeModal(clearModal);
+                    if (modalName === 'auth') closeModal(authModal);
+                });
             });
 
             createAccountBtn.addEventListener('click', openCreateAccount);
-            accountBtn.addEventListener('click', toggleAuth);
+            accountBtn.addEventListener('click', () => {
+                const user = getCurrentUser();
+                if (user) {
+                    clearCurrentUser();
+                    updateAccountButton();
+                    return;
+                }
+                openLogin();
+            });
 
-            authTabs.forEach((tab) => {
-                tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
+            continueGuestBtn.addEventListener('click', () => {
+                clearCurrentUser();
+                updateAccountButton();
+                closeModal(authModal);
             });
 
             createAccountForm.addEventListener('submit', (event) => {
@@ -1026,9 +1046,9 @@
                 if (!name || !email || !password) return;
 
                 const users = getUsers();
-                users[email] = { name, email, password };
+                users[email.toLowerCase()] = { name, email, password };
                 saveUsers(users);
-                setCurrentUser({ name, email, password });
+                setCurrentUser({ name, email });
                 updateAccountButton();
                 closeModal(authModal);
                 createAccountForm.reset();
@@ -1039,44 +1059,30 @@
                 const email = document.getElementById('loginEmail').value.trim();
                 const password = document.getElementById('loginPassword').value.trim();
                 const users = getUsers();
+                const savedUser = users[email.toLowerCase()];
 
-                if (!users[email] || users[email].password !== password) {
-                    alert('Credenciales incorrectas');
+                if (!savedUser || savedUser.password !== password) {
+                    alert('Credenciales inválidas');
                     return;
                 }
 
-                setCurrentUser(users[email]);
+                setCurrentUser({ name: savedUser.name, email: savedUser.email });
                 updateAccountButton();
                 closeModal(authModal);
                 loginForm.reset();
-                entries = loadEntries();
-                render();
             });
 
-            continueGuestBtn.addEventListener('click', () => {
-                clearCurrentUser();
-                entries = JSON.parse(localStorage.getItem(guestKey)) || [];
-                closeModal(authModal);
-                updateAccountButton();
-                render();
+            authTabs.forEach((tab) => {
+                tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
             });
 
             zoomInBtn.addEventListener('click', zoomIn);
             zoomOutBtn.addEventListener('click', zoomOut);
             zoomResetBtn.addEventListener('click', resetZoom);
 
-            mapImg.addEventListener('load', () => {
-                syncMapAspect();
-                applyZoomTransform();
-            });
-
-            window.addEventListener('resize', () => {
-                applyZoomTransform();
-            });
-
-            updateAccountButton();
-            render();
             syncMapAspect();
+            render();
+            updateAccountButton();
             applyZoomTransform();
         });
     </script>
