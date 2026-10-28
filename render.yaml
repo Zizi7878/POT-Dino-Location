@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: pot-dino-api
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: https://zizi7878.github.io
+      - key: DB_PATH
+        value: /var/data/accounts.sqlite
+    disk:
+      name: pot-data
+      mountPath: /var/data
+      sizeGB: 1
