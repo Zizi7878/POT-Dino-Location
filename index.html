@@ -167,23 +167,6 @@
             border-color: var(--accent-color);
         }
 
-        .btn-upload {
-            background-color: #2e384e;
-            color: #fff;
-            padding: 0.6rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            border: 1px dashed var(--accent-color);
-            transition: background-color 0.2s;
-        }
-
-        .btn-upload:hover {
-            background-color: var(--accent-color);
-        }
-
         .entries-list {
             flex: 1;
             overflow-y: auto;
@@ -264,19 +247,11 @@
     </header>
 
     <div class="main-container">
-        <!-- Contenedor del Mapa -->
         <div class="map-wrapper" id="mapContainer">
             <img src="https://i.ibb.co/3p3J862/gondwa-map.jpg" alt="Mapa de Gondwa de Path of Titans" class="gondwa-map-img" id="gondwaMapImg">
         </div>
 
-        <!-- Panel de Control Lateral -->
         <div class="panel">
-            <div class="form-group">
-                <label>Cargar Mapa Personalizado</label>
-                <label for="fileInput" class="btn-upload">📁 Cargar Foto de tu Dispositivo</label>
-                <input type="file" id="fileInput" accept="image/*" style="display: none;">
-            </div>
-
             <div class="form-group">
                 <label for="dinoSelect">Seleccionar Dinosaurio / Criatura</label>
                 <select id="dinoSelect">
@@ -295,6 +270,7 @@
                         <option value="Sarcosuchus" data-color="#84cc16">Sarcosuchus</option>
                         <option value="Spinosaurus" data-color="#16a34a">Spinosaurus</option>
                         <option value="Suchomimus" data-color="#15803d">Suchomimus</option>
+                        <option value="Tyranotitan" data-color="#7c3aed">Tyranotitan</option>
                         <option value="Tyrannosaurus Rex" data-color="#991b1b">Tyrannosaurus Rex</option>
                     </optgroup>
                     <optgroup label="Herbívoros Terrestres">
@@ -348,34 +324,20 @@
         document.addEventListener('DOMContentLoaded', () => {
             const mapContainer = document.getElementById('mapContainer');
             const mapImg = document.getElementById('gondwaMapImg');
-            const fileInput = document.getElementById('fileInput');
             const dinoSelect = document.getElementById('dinoSelect');
             const notesInput = document.getElementById('notesInput');
             const entriesContainer = document.getElementById('entries');
             const countSpan = document.getElementById('count');
             const clearAllBtn = document.getElementById('clearAllBtn');
 
+            const defaultMapImage = 'https://i.ibb.co/3p3J862/gondwa-map.jpg';
             let entries = JSON.parse(localStorage.getItem('gondwa_pot_dino_entries')) || [];
 
-            // Cargar imagen de mapa guardada localmente si existe
-            const savedMapImage = localStorage.getItem('gondwa_custom_map_img');
-            if (savedMapImage) {
-                mapImg.src = savedMapImage;
+            if (localStorage.getItem('gondwa_custom_map_img')) {
+                mapImg.src = localStorage.getItem('gondwa_custom_map_img');
+            } else {
+                mapImg.src = defaultMapImage;
             }
-
-            // Manejar subida de archivo local
-            fileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const base64Image = event.target.result;
-                        mapImg.src = base64Image;
-                        localStorage.setItem('gondwa_custom_map_img', base64Image);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
 
             function render() {
                 document.querySelectorAll('.marker').forEach(m => m.remove());
@@ -413,8 +375,6 @@
             }
 
             mapContainer.addEventListener('click', (e) => {
-                if (e.target.id === 'fileInput' || e.target.classList.contains('btn-upload')) return;
-
                 const rect = mapContainer.getBoundingClientRect();
                 const x = ((e.clientX - rect.left) / rect.width) * 100;
                 const y = ((e.clientY - rect.top) / rect.height) * 100;
