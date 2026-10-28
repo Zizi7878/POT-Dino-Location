@@ -512,7 +512,7 @@
                     <button type="button" class="zoom-btn" id="zoomOutBtn" aria-label="Zoom out">−</button>
                     <button type="button" class="zoom-btn" id="zoomResetBtn" aria-label="Reset zoom">↺</button>
                 </div>
-                <img src="https://i.ibb.co/3p3J862/gondwa-map.jpg" alt="Mapa de Gondwa de Path of Titans" class="gondwa-map-img" id="gondwaMapImg">
+                <img src="./gondwa-map.jpg" alt="Mapa de Gondwa de Path of Titans" class="gondwa-map-img" id="gondwaMapImg">
             </div>
         </div>
 
@@ -988,9 +988,23 @@
                 render();
             });
 
-            zoomInBtn.addEventListener('click', zoomIn);
-            zoomOutBtn.addEventListener('click', zoomOut);
-            zoomResetBtn.addEventListener('click', resetZoom);
+            const stopMapClick = (event) => {
+                event.stopPropagation();
+                event.preventDefault();
+            };
+
+            zoomInBtn.addEventListener('click', (event) => {
+                stopMapClick(event);
+                zoomIn();
+            });
+            zoomOutBtn.addEventListener('click', (event) => {
+                stopMapClick(event);
+                zoomOut();
+            });
+            zoomResetBtn.addEventListener('click', (event) => {
+                stopMapClick(event);
+                resetZoom();
+            });
 
             applyZoom();
             updateAccountButton();
