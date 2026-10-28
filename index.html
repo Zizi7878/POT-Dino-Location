@@ -229,6 +229,11 @@
             color: white;
         }
 
+        .btn-danger:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
         .empty-state {
             text-align: center;
             padding: 1.5rem;
@@ -316,7 +321,7 @@
                 <div class="entries-list" id="entries"></div>
             </div>
 
-            <button class="btn-danger" id="clearAllBtn">Borrar todos los marcadores</button>
+            <button class="btn-danger" id="clearAllBtn" type="button">Borrar todos los marcadores</button>
         </div>
     </div>
 
@@ -337,6 +342,10 @@
                 mapImg.src = localStorage.getItem('gondwa_custom_map_img');
             } else {
                 mapImg.src = defaultMapImage;
+            }
+
+            function updateClearButton() {
+                clearAllBtn.disabled = entries.length === 0;
             }
 
             function render() {
@@ -371,6 +380,7 @@
                 }
 
                 countSpan.textContent = entries.length;
+                updateClearButton();
                 localStorage.setItem('gondwa_pot_dino_entries', JSON.stringify(entries));
             }
 
@@ -404,10 +414,14 @@
             });
 
             clearAllBtn.addEventListener('click', () => {
-                if (entries.length > 0 && confirm('¿Seguro que deseas eliminar todos los registros marcados?')) {
-                    entries = [];
-                    render();
-                }
+                if (entries.length === 0) return;
+
+                const confirmed = window.confirm('¿Seguro que quieres borrar todos los marcadores? Esta acción no se puede deshacer.');
+                if (!confirmed) return;
+
+                entries = [];
+                localStorage.removeItem('gondwa_pot_dino_entries');
+                render();
             });
 
             render();
