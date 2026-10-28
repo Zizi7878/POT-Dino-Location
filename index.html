@@ -14,6 +14,9 @@
             --text-color: #f3f4f6;
             --text-muted: #9ca3af;
             --danger-color: #ef4444;
+            --danger-dark: #b91c1c;
+            --modal-bg: rgba(4, 8, 15, 0.78);
+            --shadow: rgba(0, 0, 0, 0.45);
         }
 
         * {
@@ -35,6 +38,15 @@
             background-color: var(--panel-bg);
             padding: 1rem 1.5rem;
             border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .header-text {
+            flex: 1;
             text-align: center;
         }
 
@@ -48,6 +60,22 @@
             color: var(--text-muted);
             font-size: 0.875rem;
             margin-top: 0.2rem;
+        }
+
+        .login-btn {
+            background-color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            color: white;
+            border-radius: 999px;
+            padding: 0.65rem 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .login-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
         }
 
         .main-container {
@@ -230,7 +258,7 @@
         }
 
         .btn-danger:disabled {
-            opacity: 0.45;
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
@@ -242,13 +270,124 @@
             border: 1px dashed var(--panel-border);
             border-radius: 6px;
         }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.visible {
+            display: flex;
+        }
+
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: var(--modal-bg);
+        }
+
+        .modal-card {
+            position: relative;
+            width: min(420px, calc(100vw - 2rem));
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            box-shadow: 0 18px 50px var(--shadow);
+            padding: 1.5rem;
+            z-index: 1;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.9rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            color: white;
+        }
+
+        .modal-card p {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--panel-border);
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 0.75rem;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+            color: white;
+            background-color: rgba(255,255,255,0.03);
+        }
+
+        .social-btn:hover {
+            transform: translateY(-1px);
+            border-color: var(--accent-color);
+        }
+
+        .social-btn.facebook { background: #1877f2; }
+        .social-btn.apple { background: #111827; }
+        .social-btn.google { background: #ffffff; color: #1f2937; }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+        }
+
+        .modal-actions button {
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--panel-border);
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .cancel-btn {
+            background: transparent;
+            color: var(--text-color);
+        }
+
+        .confirm-btn {
+            background: var(--danger-color);
+            border-color: var(--danger-dark);
+            color: white;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
-
     <header>
-        <h1>Path of Titans — Registro de Gondwa</h1>
-        <p>Haz clic en cualquier ubicación del mapa para registrar el avistamiento de tu dinosaurio.</p>
+        <div class="header-text">
+            <h1>Path of Titans — Registro de Gondwa</h1>
+            <p>Haz clic en cualquier ubicación del mapa para registrar el avistamiento de tu dinosaurio.</p>
+        </div>
+        <button id="accountBtn" class="login-btn" type="button">Log in</button>
     </header>
 
     <div class="main-container">
@@ -325,6 +464,32 @@
         </div>
     </div>
 
+    <div id="clearModal" class="modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close="clear"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="clearTitle">
+            <button type="button" class="modal-close" data-close="clear" aria-label="Cerrar">×</button>
+            <h3 id="clearTitle">Borrar todos los marcadores</h3>
+            <p>Esta acción eliminará todas las entradas guardadas en este mapa. No se puede deshacer.</p>
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" data-close="clear">Cancelar</button>
+                <button type="button" class="confirm-btn" id="confirmDeleteBtn">Eliminar todo</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="authModal" class="modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close="auth"></div>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+            <button type="button" class="modal-close" data-close="auth" aria-label="Cerrar">×</button>
+            <h3 id="authTitle">Inicia sesión para guardar tus entradas</h3>
+            <p>Usa una cuenta de Google, Apple o Facebook para guardar tus marcadores.</p>
+
+            <button type="button" class="social-btn google" data-provider="Google">Continue with Google</button>
+            <button type="button" class="social-btn apple" data-provider="Apple">Continue with Apple</button>
+            <button type="button" class="social-btn facebook" data-provider="Facebook">Continue with Facebook</button>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const mapContainer = document.getElementById('mapContainer');
@@ -334,9 +499,71 @@
             const entriesContainer = document.getElementById('entries');
             const countSpan = document.getElementById('count');
             const clearAllBtn = document.getElementById('clearAllBtn');
+            const accountBtn = document.getElementById('accountBtn');
+            const clearModal = document.getElementById('clearModal');
+            const authModal = document.getElementById('authModal');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
             const defaultMapImage = 'https://i.ibb.co/3p3J862/gondwa-map.jpg';
-            let entries = JSON.parse(localStorage.getItem('gondwa_pot_dino_entries')) || [];
+            const guestKey = 'gondwa_pot_dino_entries_guest';
+
+            function getCurrentUser() {
+                try {
+                    return JSON.parse(localStorage.getItem('gondwa_current_user')) || null;
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            function getStorageKey() {
+                const user = getCurrentUser();
+                if (!user) return guestKey;
+                return `gondwa_pot_dino_entries_${user.provider.toLowerCase()}`;
+            }
+
+            function loadEntries() {
+                const saved = JSON.parse(localStorage.getItem(getStorageKey())) || [];
+                return saved;
+            }
+
+            function saveEntries() {
+                localStorage.setItem(getStorageKey(), JSON.stringify(entries));
+            }
+
+            function updateAccountButton() {
+                const user = getCurrentUser();
+                if (!user) {
+                    accountBtn.textContent = 'Log in';
+                    return;
+                }
+
+                accountBtn.textContent = `${user.provider} account`;
+            }
+
+            function openModal(modal) {
+                modal.classList.add('visible');
+                modal.setAttribute('aria-hidden', 'false');
+            }
+
+            function closeModal(modal) {
+                modal.classList.remove('visible');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+
+            function toggleAuth() {
+                const user = getCurrentUser();
+                if (user) {
+                    localStorage.removeItem('gondwa_current_user');
+                    entries = JSON.parse(localStorage.getItem(guestKey)) || [];
+                    updateAccountButton();
+                    render();
+                    return;
+                }
+
+                openModal(authModal);
+            }
+
+            let entries = loadEntries();
 
             if (localStorage.getItem('gondwa_custom_map_img')) {
                 mapImg.src = localStorage.getItem('gondwa_custom_map_img');
@@ -381,7 +608,7 @@
 
                 countSpan.textContent = entries.length;
                 updateClearButton();
-                localStorage.setItem('gondwa_pot_dino_entries', JSON.stringify(entries));
+                saveEntries();
             }
 
             mapContainer.addEventListener('click', (e) => {
@@ -407,7 +634,7 @@
 
             entriesContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-btn')) {
-                    const index = e.target.dataset.index;
+                    const index = Number(e.target.dataset.index);
                     entries.splice(index, 1);
                     render();
                 }
@@ -415,15 +642,45 @@
 
             clearAllBtn.addEventListener('click', () => {
                 if (entries.length === 0) return;
+                openModal(clearModal);
+            });
 
-                const confirmed = window.confirm('¿Seguro que quieres borrar todos los marcadores? Esta acción no se puede deshacer.');
-                if (!confirmed) return;
-
+            confirmDeleteBtn.addEventListener('click', () => {
                 entries = [];
-                localStorage.removeItem('gondwa_pot_dino_entries');
+                closeModal(clearModal);
                 render();
             });
 
+            document.querySelectorAll('[data-close="clear"]').forEach((el) => {
+                el.addEventListener('click', () => closeModal(clearModal));
+            });
+
+            document.querySelectorAll('[data-close="auth"]').forEach((el) => {
+                el.addEventListener('click', () => closeModal(authModal));
+            });
+
+            accountBtn.addEventListener('click', toggleAuth);
+
+            document.querySelectorAll('.social-btn').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const provider = button.dataset.provider;
+                    const user = {
+                        provider,
+                        label: `${provider} User`,
+                        id: `${provider.toLowerCase()}-${Date.now()}`
+                    };
+
+                    localStorage.setItem('gondwa_current_user', JSON.stringify(user));
+                    updateAccountButton();
+                    closeModal(authModal);
+
+                    const existingEntries = JSON.parse(localStorage.getItem(getStorageKey())) || [];
+                    entries = existingEntries;
+                    render();
+                });
+            });
+
+            updateAccountButton();
             render();
         });
     </script>
