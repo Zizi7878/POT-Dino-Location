@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="pot-api-url" content="http://localhost:3000" />
   <title>POT Dino Location</title>
   <style>
     :root {
@@ -295,6 +296,7 @@
 
       <div class="map-list">
         <div id="entriesList" class="entry-list" aria-live="polite"></div>
+        <div id="dataStatus" class="status" aria-live="polite"></div>
       </div>
     </section>
   </main>
@@ -312,7 +314,7 @@
       <form id="loginForm" class="modal-form account-form active">
         <div class="field">
           <label for="loginUsername">Username</label>
-          <input id="loginUsername" type="text" placeholder="Your username" required />
+          <input id="loginUsername" type="text" placeholder="Your username" minlength="3" maxlength="32" required />
         </div>
 
         <div class="field">
@@ -326,17 +328,17 @@
       <form id="createAccountForm" class="modal-form account-form">
         <div class="field">
           <label for="createUsername">Username</label>
-          <input id="createUsername" type="text" placeholder="Choose a username" required />
+          <input id="createUsername" type="text" placeholder="Choose a username" minlength="3" maxlength="32" pattern="[A-Za-z0-9_-]+" required />
         </div>
 
         <div class="field">
           <label for="createPassword">Password</label>
-          <input id="createPassword" type="password" placeholder="Choose a password" required />
+          <input id="createPassword" type="password" placeholder="Choose a password (12 characters minimum)" minlength="12" maxlength="128" required />
         </div>
 
         <div class="field">
           <label for="createConfirmPassword">Confirm password</label>
-          <input id="createConfirmPassword" type="password" placeholder="Repeat password" required />
+          <input id="createConfirmPassword" type="password" placeholder="Repeat password" minlength="12" maxlength="128" required />
         </div>
 
         <button type="submit" class="btn">Create account</button>
@@ -348,8 +350,8 @@
 
   <script>
     (function () {
-      const MAP_KEY = 'pot_dino_map_entries';
-      const ACCOUNTS_KEY = 'pot_accounts';
+      const API_BASE_URL = document.querySelector('meta[name="pot-api-url"]').content.trim().replace(/\/+$/, '');
+      const API_TOKEN_KEY = 'pot_api_token';
       const ACTIVE_ACCOUNT_KEY = 'pot_active_account';
       const BOARD_ALLOWED_USERNAME = 'zizi';
 
@@ -366,6 +368,7 @@
       const zoomResetBtn = document.getElementById('zoomResetBtn');
       const accountModal = document.getElementById('accountModal');
       const accountStatus = document.getElementById('accountStatus');
+      const dataStatus = document.getElementById('dataStatus');
       const createAccountBtn = document.getElementById('createAccountBtn');
       const loginAccountBtn = document.getElementById('loginAccountBtn');
       const logoutBtn = document.getElementById('logoutBtn');
@@ -386,6 +389,8 @@
       let dragStart = null;
       let draggedMap = false;
       let ignoreNextClick = false;
+      let saveQueue = Promise.resolve();
+      let entriesLoaded = false;
 
       function normalizeUsername(value) {
         return String(value || '').trim().toLowerCase();
@@ -423,6 +428,13 @@
         if (type === 'success') accountStatus.classList.add('success');
       }
 
+      function setDataStatus(message, type) {
+        dataStatus.textContent = message || '';
+        dataStatus.classList.remove('error', 'success');
+        if (type === 'error') dataStatus.classList.add('error');
+        if (type === 'success') dataStatus.classList.add('success');
+      }
+
       function getActiveAccount() {
         try {
           const parsed = JSON.parse(localStorage.getItem(ACTIVE_ACCOUNT_KEY) || 'null');
@@ -435,18 +447,38 @@
         return null;
       }
 
-      function setActiveAccount(account) {
+      function getAuthToken() {
+        return localStorage.getItem(API_TOKEN_KEY);
+      }
+
+      function setActiveSession(token, account) {
+        localStorage.setItem(API_TOKEN_KEY, token);
         localStorage.setItem(ACTIVE_ACCOUNT_KEY, JSON.stringify(account));
         updateAccountButtons();
       }
 
-      function clearActiveAccount() {
+      function clearActiveSession() {
+        localStorage.removeItem(API_TOKEN_KEY);
         localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
         updateAccountButtons();
       }
 
-      function getAccountStorageKey(accountId) {
-        return `pot_dino_map_entries_${accountId}`;
+      async function apiRequest(path, options = {}, token = getAuthToken()) {
+        if (!API_BASE_URL) throw new Error('The account API URL is not configured.');
+
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+        if (response.status === 204) return null;
+
+        let result;
+        try {
+          result = await response.json();
+        } catch (error) {
+          throw new Error('The account server returned an invalid response.');
+        }
+        if (!response.ok) throw new Error(result.error || `Request failed (${response.status}).`);
+        return result;
       }
 
       function updateAccountButtons() {
@@ -459,48 +491,53 @@
         headerAccountStatus.textContent = hasAccount ? `Logged in as ${activeAccount.username}` : '';
       }
 
-      function loadEntriesForAccount(account) {
-        const key = account ? getAccountStorageKey(account.id) : MAP_KEY;
-
-        try {
-          const parsed = JSON.parse(localStorage.getItem(key) || '[]');
-          return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-          return [];
-        }
-      }
-
-      function saveEntriesForAccount(account, entries) {
-        const key = account ? getAccountStorageKey(account.id) : MAP_KEY;
-        localStorage.setItem(key, JSON.stringify(entries));
-      }
-
-      function loadMapEntries() {
-        return loadEntriesForAccount(getActiveAccount());
+      async function loadMapEntries() {
+        const result = await apiRequest('/api/entries');
+        mapEntries = result.entries;
+        entriesLoaded = true;
+        renderMapMarkers();
+        renderEntriesList();
+        setDataStatus('Entries loaded from your account.', 'success');
       }
 
       function saveMapEntries() {
-        saveEntriesForAccount(getActiveAccount(), mapEntries);
-      }
-
-      function readAccounts() {
-        try {
-          return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
-        } catch (error) {
-          return {};
+        if (!entriesLoaded) {
+          setDataStatus('Entries are not loaded yet. Wait for your account data before making changes.', 'error');
+          return Promise.resolve(false);
         }
+        const entriesToSave = mapEntries.map((entry) => ({ ...entry }));
+        saveQueue = saveQueue.catch(() => {}).then(() => apiRequest('/api/entries', {
+          method: 'PUT',
+          body: JSON.stringify({ entries: entriesToSave })
+        }));
+        return saveQueue.then(() => {
+          setDataStatus('All changes saved to your account.', 'success');
+          return true;
+        }).catch((error) => {
+          setDataStatus(`Could not save entries: ${error.message}`, 'error');
+          return false;
+        });
       }
 
-      function writeAccounts(accounts) {
-        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-      }
-
-      function applyAccountSession(account) {
-        saveMapEntries();
-        setActiveAccount(account);
-        mapEntries = loadMapEntries();
+      async function applyAccountSession(session) {
+        const previousToken = getAuthToken();
+        setActiveSession(session.token, session.account);
+        entriesLoaded = false;
+        mapEntries = [];
         renderMapMarkers();
         renderEntriesList();
+        try {
+          await loadMapEntries();
+        } catch (error) {
+          setDataStatus(`Signed in, but entries could not be loaded: ${error.message}`, 'error');
+        }
+        if (previousToken && previousToken !== session.token) {
+          try {
+            await apiRequest('/api/auth/logout', { method: 'POST' }, previousToken);
+          } catch (error) {
+            setDataStatus(`Signed in, but the previous session could not be revoked: ${error.message}`, 'error');
+          }
+        }
       }
 
       function applyMapTransform() {
@@ -553,11 +590,11 @@
           removeBtn.type = 'button';
           removeBtn.textContent = '×';
           removeBtn.title = 'Delete marker';
-          removeBtn.addEventListener('click', () => {
+          removeBtn.addEventListener('click', async () => {
             mapEntries.splice(index, 1);
-            saveMapEntries();
             renderMapMarkers();
             renderEntriesList();
+            await saveMapEntries();
           });
 
           card.append(info, removeBtn);
@@ -565,12 +602,16 @@
         });
       }
 
-      function saveMapMarkerFromClick(clientX, clientY) {
+      async function saveMapMarkerFromClick(clientX, clientY) {
         const activeAccount = getActiveAccount();
-        if (!activeAccount) {
+        if (!activeAccount || !getAuthToken()) {
           setAccountStatus('Please create an account or log in before saving entries.', 'error');
           showAccountMode('login');
           openModal(accountModal);
+          return;
+        }
+        if (!entriesLoaded) {
+          setDataStatus('Your account entries are still loading. Please try again in a moment.', 'error');
           return;
         }
 
@@ -632,9 +673,9 @@
           color: palette[selectedDino] || '#7c9cff'
         });
 
-        saveMapEntries();
         renderMapMarkers();
         renderEntriesList();
+        await saveMapEntries();
       }
 
       function showAccountMode(mode) {
@@ -659,45 +700,52 @@
         openModal(accountModal);
       });
 
-      logoutBtn.addEventListener('click', () => {
-        const activeAccount = getActiveAccount();
-        if (!activeAccount) {
-          return;
-        }
+      logoutBtn.addEventListener('click', async () => {
+        const token = getAuthToken();
+        if (!token) return;
 
-        saveMapEntries();
-        clearActiveAccount();
-        mapEntries = loadEntriesForAccount(null);
-        renderMapMarkers();
-        renderEntriesList();
-        setAccountStatus('Logged out. Entries were saved to your account.', 'success');
+        const saved = await saveMapEntries();
+        if (!saved) return;
+
+        try {
+          await apiRequest('/api/auth/logout', { method: 'POST' }, token);
+          clearActiveSession();
+          mapEntries = [];
+          saveQueue = Promise.resolve();
+          renderMapMarkers();
+          renderEntriesList();
+          setDataStatus('Logged out. Your entries remain saved to your account.', 'success');
+          entriesLoaded = true;
+          setAccountStatus('Logged out successfully.', 'success');
+        } catch (error) {
+          setAccountStatus(`Could not log out: ${error.message}`, 'error');
+        }
       });
 
-      loginForm.addEventListener('submit', (event) => {
+      loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         const username = normalizeUsername(loginUsername.value);
-        const password = loginPassword.value.trim();
+        const password = loginPassword.value;
 
         if (!username || !password) {
           setAccountStatus('Please fill in both username and password.', 'error');
           return;
         }
 
-        const accounts = readAccounts();
-        const storedUser = accounts[username];
-
-        if (!storedUser || storedUser.password !== password) {
-          setAccountStatus('Invalid username or password.', 'error');
-          return;
+        try {
+          const session = await apiRequest('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ username, password })
+          }, null);
+          await applyAccountSession(session);
+          setAccountStatus('Logged in successfully.', 'success');
+          closeModal(accountModal);
+        } catch (error) {
+          setAccountStatus(error.message, 'error');
         }
-
-        const account = { id: storedUser.id || username, username: storedUser.username || username };
-        applyAccountSession(account);
-        setAccountStatus('Logged in successfully.', 'success');
-        closeModal(accountModal);
       });
 
-      createAccountForm.addEventListener('submit', (event) => {
+      createAccountForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         const username = normalizeUsername(createUsername.value);
         const password = createPassword.value;
@@ -713,23 +761,30 @@
           return;
         }
 
-        const accounts = readAccounts();
-        if (accounts[username]) {
-          setAccountStatus('That username already exists.', 'error');
+        let initialEntries = [];
+        try {
+          const storedEntries = localStorage.getItem(`pot_dino_map_entries_${username}`);
+          if (storedEntries) {
+            const parsedEntries = JSON.parse(storedEntries);
+            if (Array.isArray(parsedEntries)) initialEntries = parsedEntries;
+          }
+        } catch (error) {
+          setAccountStatus('Your previous local entries could not be read. They have not been changed.', 'error');
           return;
         }
 
-        accounts[username] = {
-          id: username,
-          username,
-          password
-        };
-        writeAccounts(accounts);
-
-        const account = { id: username, username };
-        applyAccountSession(account);
-        setAccountStatus('Account created successfully.', 'success');
-        closeModal(accountModal);
+        try {
+          const session = await apiRequest('/api/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({ username, password, initialEntries })
+          }, null);
+          localStorage.removeItem('pot_accounts');
+          await applyAccountSession(session);
+          setAccountStatus('Account created successfully.', 'success');
+          closeModal(accountModal);
+        } catch (error) {
+          setAccountStatus(error.message, 'error');
+        }
       });
 
       accountModeButtons.forEach((button) => {
@@ -740,7 +795,7 @@
 
       saveMarkerBtn.addEventListener('click', () => {
         const activeAccount = getActiveAccount();
-        if (!activeAccount) {
+        if (!activeAccount || !getAuthToken()) {
           setAccountStatus('Please create an account or log in before saving entries.', 'error');
           showAccountMode('login');
           openModal(accountModal);
@@ -804,7 +859,7 @@
         }
 
         const activeAccount = getActiveAccount();
-        if (!activeAccount) {
+        if (!activeAccount || !getAuthToken()) {
           setAccountStatus('Please create an account or log in before saving entries.', 'error');
           showAccountMode('login');
           openModal(accountModal);
@@ -840,11 +895,37 @@
         }
       });
 
-      mapEntries = loadMapEntries();
-      renderMapMarkers();
-      renderEntriesList();
-      updateAccountButtons();
-      applyMapTransform();
+      async function initializeSession() {
+        localStorage.removeItem('pot_accounts');
+        if (!getAuthToken()) {
+          localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
+          entriesLoaded = true;
+          updateAccountButtons();
+          renderMapMarkers();
+          renderEntriesList();
+          applyMapTransform();
+          return;
+        }
+
+        try {
+          const result = await apiRequest('/api/auth/me');
+          localStorage.setItem(ACTIVE_ACCOUNT_KEY, JSON.stringify(result.account));
+          updateAccountButtons();
+          await loadMapEntries();
+        } catch (error) {
+          if (error.message.includes('session has expired') || error.message.includes('log in')) {
+            clearActiveSession();
+            mapEntries = [];
+            renderMapMarkers();
+            renderEntriesList();
+            entriesLoaded = true;
+          }
+          setDataStatus(`Could not load your account: ${error.message}`, 'error');
+        }
+        applyMapTransform();
+      }
+
+      initializeSession();
     })();
   </script>
 </body>
