@@ -25,28 +25,17 @@
     }
 
     * { box-sizing: border-box; }
-
     html, body {
       margin: 0;
       min-height: 100%;
       font-family: Arial, Helvetica, sans-serif;
-      background:
-        radial-gradient(circle at top, rgba(124, 156, 255, 0.12), transparent 35%),
-        linear-gradient(180deg, #091220 0%, #0e1728 100%);
+      background: radial-gradient(circle at top, rgba(124, 156, 255, 0.12), transparent 35%), linear-gradient(180deg, #091220 0%, #0e1728 100%);
       color: var(--text);
     }
-
-    body {
-      min-height: 100vh;
-    }
-
-    img {
-      max-width: 100%;
-      display: block;
-    }
-
+    body { min-height: 100vh; }
+    img { max-width: 100%; display: block; }
     a { color: inherit; text-decoration: none; }
-    button, input, textarea, select { font: inherit; }
+    button, input, select { font: inherit; }
 
     .topbar {
       position: sticky;
@@ -57,7 +46,6 @@
       border-bottom: 1px solid var(--border);
       padding: 0.9rem 1.25rem;
     }
-
     .topbar-inner {
       max-width: 1500px;
       margin: 0 auto;
@@ -67,94 +55,43 @@
       gap: 1rem;
       flex-wrap: wrap;
     }
+    .brand { display: inline-flex; align-items: center; gap: 0.8rem; }
+    .brand-logo { width: 52px; height: 52px; border-radius: 14px; object-fit: cover; border: 1px solid var(--border); box-shadow: 0 12px 24px rgba(0,0,0,0.22); }
+    .brand-copy { display: flex; flex-direction: column; gap: 0.15rem; }
+    .brand-copy h1 { margin: 0; font-size: 1.18rem; letter-spacing: 0.04em; }
+    .brand-copy p { margin: 0; color: var(--muted); font-size: 0.76rem; }
+    .header-actions { display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center; }
+    .header-status { color: var(--success); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; min-height: 1rem; white-space: nowrap; }
 
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.8rem;
-    }
-
-    .brand-logo {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-      object-fit: cover;
-      border: 1px solid var(--border);
-      box-shadow: 0 12px 24px rgba(0,0,0,0.22);
-    }
-
-    .brand-copy {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-    }
-
-    .brand-copy h1 {
-      margin: 0;
-      font-size: 1.18rem;
-      letter-spacing: 0.04em;
-    }
-
-    .brand-copy p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.76rem;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 0.7rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .header-status {
-      color: var(--success);
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: none;
-      min-height: 1rem;
-      white-space: nowrap;
-    }
-
-    .btn,
-    .btn-ghost,
-    .btn-danger {
+    .btn, .btn-ghost, .btn-danger {
       white-space: nowrap;
       border-radius: 10px;
       padding: 0.72rem 1rem;
       font-weight: 700;
       cursor: pointer;
       border: 1px solid var(--border);
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      transition: transform 0.15s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
-
     .btn {
       background: linear-gradient(180deg, var(--accent), var(--accent-strong));
       border-color: var(--border-strong);
       color: #07111d;
       box-shadow: 0 10px 18px rgba(92, 123, 255, 0.28);
     }
-
     .btn-ghost {
       background: rgba(124, 156, 255, 0.08);
       color: var(--text);
       border-color: rgba(124, 156, 255, 0.22);
     }
-
     .btn-danger {
       background: rgba(255, 106, 123, 0.08);
       border-color: rgba(255, 106, 123, 0.35);
       color: #ffd7dd;
     }
-
-    .btn:hover, .btn-ghost:hover, .btn-danger:hover {
-      transform: translateY(-1px);
-    }
+    .btn:hover, .btn-ghost:hover, .btn-danger:hover { transform: translateY(-1px); }
 
     .page-shell {
       max-width: 1500px;
@@ -164,7 +101,6 @@
       grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
       gap: 1.25rem;
     }
-
     .panel {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -172,7 +108,6 @@
       box-shadow: 0 18px 36px var(--shadow);
       overflow: hidden;
     }
-
     .panel-header {
       display: flex;
       justify-content: space-between;
@@ -182,298 +117,43 @@
       border-bottom: 1px solid var(--border);
       background: rgba(255,255,255,0.02);
     }
+    .panel-header h2 { margin: 0; font-size: 1.08rem; letter-spacing: 0.04em; }
 
-    .panel-header h2 {
-      margin: 0;
-      font-size: 1.08rem;
-      letter-spacing: 0.04em;
-    }
+    .map-panel, .board-panel { display: flex; flex-direction: column; min-height: 760px; }
+    .map-frame { padding: 1rem; background: rgba(255, 255, 255, 0.01); }
+    .map-view { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); min-height: 560px; background: rgba(7, 15, 24, 0.95); }
+    .map-layer { position: relative; width: 100%; min-height: 560px; display: flex; align-items: center; justify-content: center; background: #071420; cursor: crosshair; }
+    .map-image { width: 100%; min-height: 560px; object-fit: contain; pointer-events: none; user-select: none; transform-origin: center center; transition: transform 0.15s ease; }
+    .zoom-controls { position: absolute; top: 1rem; right: 1rem; z-index: 10; display: flex; flex-direction: column; gap: 0.5rem; background: rgba(9, 18, 32, 0.72); border: 1px solid var(--border); border-radius: 12px; padding: 0.45rem; }
+    .zoom-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border); background: rgba(16, 28, 48, 0.9); color: var(--text); cursor: pointer; font-size: 1.25rem; }
+    .marker { position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 0 12px rgba(0,0,0,0.7); z-index: 2; }
 
-    .map-panel {
-      display: flex;
-      flex-direction: column;
-      min-height: 760px;
-    }
+    .map-form { display: grid; grid-template-columns: 1.2fr 1.8fr auto; gap: 0.75rem; padding: 1rem; border-top: 1px solid var(--border); background: rgba(255,255,255,0.01); align-items: end; }
+    .field { display: flex; flex-direction: column; gap: 0.38rem; }
+    .field label { color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+    .field select, .field input { width: 100%; border-radius: 10px; border: 1px solid var(--border); background: rgba(8, 17, 29, 0.95); color: var(--text); padding: 0.82rem 0.9rem; }
+    .field input::placeholder { color: rgba(182, 196, 220, 0.7); }
 
-    .map-frame {
-      padding: 1rem;
-      background: rgba(255, 255, 255, 0.01);
-    }
+    .map-list { padding: 0 1rem 1rem; }
+    .entry-list { display: flex; flex-direction: column; gap: 0.7rem; max-height: 220px; overflow-y: auto; }
+    .entry-card { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; background: rgba(8, 17, 29, 0.8); border-left: 4px solid var(--accent); border-radius: 10px; padding: 0.7rem 0.8rem; }
+    .entry-card h4 { margin: 0 0 0.2rem; font-size: 0.96rem; }
+    .entry-card p { margin: 0; color: var(--muted); font-size: 0.76rem; line-height: 1.5; }
+    .entry-card button { background: transparent; color: var(--muted); border: none; font-size: 1.3rem; cursor: pointer; }
 
-    .map-view {
-      position: relative;
-      border-radius: 18px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      min-height: 560px;
-      background: rgba(7, 15, 24, 0.95);
-    }
-
-    .map-layer {
-      position: relative;
-      width: 100%;
-      min-height: 560px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #071420;
-      cursor: crosshair;
-    }
-
-    .map-image {
-      width: 100%;
-      min-height: 560px;
-      object-fit: contain;
-      pointer-events: none;
-      user-select: none;
-      transform-origin: center center;
-      transition: transform 0.15s ease;
-    }
-
-    .zoom-controls {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      background: rgba(9, 18, 32, 0.72);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 0.45rem;
-      backdrop-filter: blur(4px);
-    }
-
-    .zoom-btn {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: rgba(16, 28, 48, 0.9);
-      color: var(--text);
-      cursor: pointer;
-      font-size: 1.25rem;
-    }
-
-    .marker {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      border: 2px solid rgba(255,255,255,0.9);
-      box-shadow: 0 0 12px rgba(0,0,0,0.7);
-      z-index: 2;
-    }
-
-    .map-form {
-      display: grid;
-      grid-template-columns: 1.2fr 1.8fr auto;
-      gap: 0.75rem;
-      padding: 1rem;
-      border-top: 1px solid var(--border);
-      background: rgba(255,255,255,0.01);
-      align-items: end;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.38rem;
-    }
-
-    .field label {
-      color: var(--muted);
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .field select,
-    .field input,
-    .field textarea {
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: rgba(8, 17, 29, 0.95);
-      color: var(--text);
-      padding: 0.82rem 0.9rem;
-    }
-
-    .field input::placeholder,
-    .field textarea::placeholder {
-      color: rgba(182, 196, 220, 0.7);
-    }
-
-    .map-list {
-      padding: 0 1rem 1rem;
-    }
-
-    .entry-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.7rem;
-      max-height: 220px;
-      overflow-y: auto;
-    }
-
-    .entry-card {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.8rem;
-      background: rgba(8, 17, 29, 0.8);
-      border-left: 4px solid var(--accent);
-      border-radius: 10px;
-      padding: 0.7rem 0.8rem;
-    }
-
-    .entry-card h4 {
-      margin: 0 0 0.2rem;
-      font-size: 0.96rem;
-    }
-
-    .entry-card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.76rem;
-      line-height: 1.5;
-    }
-
-    .entry-card button {
-      background: transparent;
-      color: var(--muted);
-      border: none;
-      font-size: 1.3rem;
-      cursor: pointer;
-    }
-
-    .featured-banner {
-      background: linear-gradient(135deg, rgba(92,123,255,0.18), rgba(255, 255, 255, 0.02));
-      border: 1px solid var(--border-strong);
-      border-radius: 18px;
-      padding: 1rem 1.1rem;
-      box-shadow: 0 18px 32px rgba(0, 0, 0, 0.12);
-    }
-
-    .featured-banner h3 {
-      margin: 0 0 0.45rem;
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
-      color: #dce8ff;
-      text-transform: uppercase;
-    }
-
-    .featured-banner .title {
-      margin: 0;
-      font-size: clamp(1.2rem, 2vw, 1.8rem);
-    }
-
-    .featured-banner .text {
-      margin: 0.5rem 0 0;
-      color: var(--muted);
-      line-height: 1.6;
-      white-space: pre-wrap;
-    }
-
-    .featured-banner img {
-      width: 100%;
-      max-height: 260px;
-      object-fit: cover;
-      border-radius: 12px;
-      margin-top: 1rem;
-      border: 1px solid var(--border);
-    }
-
-    .board-panel {
-      display: flex;
-      flex-direction: column;
-      min-height: 760px;
-    }
-
-    .board-body {
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .board-empty {
-      padding: 1.3rem;
-      border: 1px dashed var(--border);
-      border-radius: 12px;
-      background: rgba(10, 17, 28, 0.7);
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.6;
-    }
-
-    .post-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.9rem;
-    }
-
-    .post-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1rem;
-      box-shadow: 0 12px 22px rgba(0,0,0,0.11);
-    }
-
-    .post-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.75rem;
-      align-items: center;
-      margin-bottom: 0.8rem;
-    }
-
-    .post-head h3 {
-      margin: 0;
-      font-size: 1.05rem;
-    }
-
-    .post-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .tiny-btn {
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: rgba(124, 156, 255, 0.08);
-      color: var(--text);
-      cursor: pointer;
-      padding: 0.48rem 0.7rem;
-      font-weight: 700;
-    }
-
-    .tiny-btn.danger {
-      background: rgba(255, 106, 123, 0.09);
-      border-color: rgba(255, 106, 123, 0.38);
-      color: #ffd9df;
-    }
-
-    .post-card p {
-      margin: 0;
-      color: var(--text);
-      line-height: 1.65;
-      white-space: pre-wrap;
-    }
-
-    .post-card img {
-      width: 100%;
-      max-height: 300px;
-      object-fit: cover;
-      margin-top: 0.9rem;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-    }
+    .board-body { padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+    .featured-banner { background: linear-gradient(135deg, rgba(92,123,255,0.18), rgba(255, 255, 255, 0.02)); border: 1px solid var(--border-strong); border-radius: 18px; padding: 1rem 1.1rem; box-shadow: 0 18px 32px rgba(0, 0, 0, 0.12); }
+    .featured-banner h3 { margin: 0 0 0.45rem; font-size: 0.8rem; letter-spacing: 0.12em; color: #dce8ff; text-transform: uppercase; }
+    .featured-banner .title { margin: 0; font-size: clamp(1.2rem, 2vw, 1.8rem); }
+    .featured-banner .text { margin: 0.5rem 0 0; color: var(--muted); line-height: 1.6; white-space: pre-wrap; }
+    .featured-banner img { width: 100%; max-height: 260px; object-fit: cover; border-radius: 12px; margin-top: 1rem; border: 1px solid var(--border); }
+    .board-empty { padding: 1.3rem; border: 1px dashed var(--border); border-radius: 12px; background: rgba(10, 17, 28, 0.7); color: var(--muted); text-align: center; line-height: 1.6; }
+    .post-list { display: flex; flex-direction: column; gap: 0.9rem; }
+    .post-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; box-shadow: 0 12px 22px rgba(0,0,0,0.11); }
+    .post-head { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; margin-bottom: 0.8rem; }
+    .post-head h3 { margin: 0; font-size: 1.05rem; }
+    .post-card p { margin: 0; color: var(--text); line-height: 1.65; white-space: pre-wrap; }
+    .post-card img { width: 100%; max-height: 300px; object-fit: cover; margin-top: 0.9rem; border-radius: 12px; border: 1px solid var(--border); }
 
     .modal {
       position: fixed;
@@ -485,96 +165,22 @@
       z-index: 50;
       padding: 1rem;
     }
-
-    .modal.visible {
-      display: flex;
-    }
-
-    .modal-card {
-      width: min(440px, 100%);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.2rem;
-      box-shadow: 0 26px 60px rgba(0,0,0,0.35);
-    }
-
-    .modal-card h3 {
-      margin-top: 0;
-      margin-bottom: 0.5rem;
-    }
-
-    .modal-card p {
-      color: var(--muted);
-      margin: 0 0 1rem;
-      line-height: 1.5;
-    }
-
-    .modal-form {
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-    }
-
-    .account-mode-switch {
-      display: flex;
-      gap: 0.6rem;
-      margin-bottom: 0.9rem;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.3rem;
-      background: rgba(8,17,29,0.8);
-    }
-
-    .account-mode-btn {
-      flex: 1;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      padding: 0.7rem 0.8rem;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .account-mode-btn.active {
-      background: rgba(124, 156, 255, 0.12);
-      border-color: rgba(124, 156, 255, 0.25);
-      color: var(--text);
-    }
-
-    .account-form {
-      display: none;
-    }
-
-    .account-form.active {
-      display: flex;
-    }
-
-    .status {
-      min-height: 1.2rem;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
+    .modal.visible { display: flex; }
+    .modal-card { width: min(440px, 100%); background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 1.2rem; box-shadow: 0 26px 60px rgba(0,0,0,0.35); }
+    .modal-card h3 { margin-top: 0; margin-bottom: 0.5rem; }
+    .modal-card p { color: var(--muted); margin: 0 0 1rem; line-height: 1.5; }
+    .account-mode-switch { display: flex; gap: 0.6rem; margin-bottom: 0.9rem; border: 1px solid var(--border); border-radius: 10px; padding: 0.3rem; background: rgba(8,17,29,0.8); }
+    .account-mode-btn { flex: 1; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted); padding: 0.7rem 0.8rem; cursor: pointer; font-weight: 700; }
+    .account-mode-btn.active { background: rgba(124, 156, 255, 0.12); border-color: rgba(124, 156, 255, 0.25); color: var(--text); }
+    .modal-form { display: flex; flex-direction: column; gap: 0.8rem; }
+    .account-form { display: none; }
+    .account-form.active { display: flex; }
+    .status { min-height: 1.2rem; font-size: 0.8rem; color: var(--muted); }
     .status.error { color: #ffb1bd; }
     .status.success { color: #9af0c7; }
 
-    @media (max-width: 980px) {
-      .page-shell {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .map-form {
-        grid-template-columns: 1fr;
-      }
-
-      .brand-copy h1 {
-        font-size: 1rem;
-      }
-    }
+    @media (max-width: 980px) { .page-shell { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { .map-form { grid-template-columns: 1fr; } .brand-copy h1 { font-size: 1rem; } }
   </style>
 </head>
 <body>
@@ -713,6 +319,7 @@
       const BOARD_KEY = 'pot_board_posts';
       const ACCOUNTS_KEY = 'pot_accounts';
       const ACTIVE_ACCOUNT_KEY = 'pot_active_account';
+      const BOARD_ALLOWED_USERNAME = 'zizi';
 
       const mapLayer = document.getElementById('mapLayer');
       const entriesList = document.getElementById('entriesList');
@@ -747,6 +354,21 @@
         return String(value || '').trim().toLowerCase();
       }
 
+      function isBoardEditor() {
+        const activeAccount = getActiveAccount();
+        return Boolean(activeAccount) && normalizeUsername(activeAccount.username) === BOARD_ALLOWED_USERNAME;
+      }
+
+      function requireBoardEditor(actionDescription) {
+        if (!isBoardEditor()) {
+          setAccountStatus(`Only the user "Zizi" can ${actionDescription}.`, 'error');
+          showAccountMode('login');
+          openModal(accountModal);
+          return false;
+        }
+        return true;
+      }
+
       function openModal(modal) {
         modal.classList.add('visible');
         modal.setAttribute('aria-hidden', 'false');
@@ -755,6 +377,13 @@
       function closeModal(modal) {
         modal.classList.remove('visible');
         modal.setAttribute('aria-hidden', 'true');
+      }
+
+      function setAccountStatus(message, type) {
+        accountStatus.textContent = message || '';
+        accountStatus.classList.remove('error', 'success');
+        if (type === 'error') accountStatus.classList.add('error');
+        if (type === 'success') accountStatus.classList.add('success');
       }
 
       function getActiveAccount() {
@@ -790,12 +419,7 @@
         loginAccountBtn.textContent = hasAccount ? `My account: ${activeAccount.username}` : 'Log in';
         createAccountBtn.textContent = hasAccount ? 'Switch account' : 'Create account';
         logoutBtn.style.display = hasAccount ? 'inline-flex' : 'none';
-
-        if (hasAccount) {
-          headerAccountStatus.textContent = `Logged in as ${activeAccount.username}`;
-        } else {
-          headerAccountStatus.textContent = '';
-        }
+        headerAccountStatus.textContent = hasAccount ? `Logged in as ${activeAccount.username}` : '';
       }
 
       function loadMapEntries() {
@@ -826,7 +450,23 @@
       }
 
       function saveBoardEntries() {
+        if (!isBoardEditor()) {
+          return false;
+        }
         localStorage.setItem(BOARD_KEY, JSON.stringify(boardEntries));
+        return true;
+      }
+
+      function readAccounts() {
+        try {
+          return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}');
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function writeAccounts(accounts) {
+        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
       }
 
       function renderMapMarkers() {
@@ -884,6 +524,15 @@
         });
       }
 
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
       function renderFeatured() {
         if (!boardEntries.length) {
           featuredBanner.innerHTML = '<h3>Featured Announcement</h3><p class="text">No announcements yet. The admin can publish the first update from the admin portal.</p>';
@@ -907,7 +556,7 @@
           return;
         }
 
-        boardEntries.forEach((post) => {
+        boardEntries.forEach((post, index) => {
           const card = document.createElement('article');
           card.className = 'post-card';
 
@@ -920,11 +569,25 @@
           const actions = document.createElement('div');
           actions.className = 'post-actions';
 
-          head.append(title, actions);
+          if (isBoardEditor()) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'tiny-btn danger';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.addEventListener('click', () => {
+              if (!requireBoardEditor('delete bulletin board posts')) return;
+              boardEntries.splice(index, 1);
+              if (saveBoardEntries()) {
+                renderFeatured();
+                renderBoard();
+              }
+            });
+            actions.appendChild(deleteBtn);
+          }
 
+          head.append(title, actions);
           const text = document.createElement('p');
           text.textContent = post.text || '';
-
           card.append(head, text);
 
           if (post.media) {
@@ -938,13 +601,13 @@
         });
       }
 
-      function escapeHtml(value) {
-        return String(value)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
+      function createBoardPost(post) {
+        if (!requireBoardEditor('create bulletin board posts')) return false;
+        boardEntries.unshift(post);
+        if (!saveBoardEntries()) return false;
+        renderFeatured();
+        renderBoard();
+        return true;
       }
 
       function saveMapMarkerFromClick(clientX, clientY) {
@@ -957,9 +620,7 @@
         }
 
         const saveConfirmed = window.confirm('Save this entry to your account?');
-        if (!saveConfirmed) {
-          return;
-        }
+        if (!saveConfirmed) return;
 
         const rect = mapLayer.getBoundingClientRect();
         const xPercent = ((clientX - rect.left) / rect.width) * 100;
@@ -998,33 +659,60 @@
         loginForm.classList.toggle('active', !isCreate);
         createAccountForm.classList.toggle('active', isCreate);
         accountModeButtons.forEach((button) => {
-          const active = button.dataset.accountMode === mode;
-          button.classList.toggle('active', active);
+          const isSelected = button.dataset.accountMode === mode;
+          button.classList.toggle('active', isSelected);
         });
       }
 
-      function setAccountStatus(message, type) {
-        accountStatus.textContent = message;
-        accountStatus.classList.remove('error', 'success');
-        if (type) {
-          accountStatus.classList.add(type);
-        }
-      }
+      createAccountBtn.addEventListener('click', () => {
+        setAccountStatus('', '');
+        showAccountMode('create');
+        openModal(accountModal);
+      });
 
-      function handleCreateAccount(event) {
+      loginAccountBtn.addEventListener('click', () => {
+        setAccountStatus('', '');
+        showAccountMode('login');
+        openModal(accountModal);
+      });
+
+      logoutBtn.addEventListener('click', () => {
+        clearActiveAccount();
+        setAccountStatus('Logged out.', 'success');
+      });
+
+      loginForm.addEventListener('submit', (event) => {
         event.preventDefault();
+        const username = normalizeUsername(loginUsername.value);
+        const password = loginPassword.value.trim();
 
-        const username = String(createUsername.value || '').trim();
-        const password = String(createPassword.value || '');
-        const confirmPassword = String(createConfirmPassword.value || '');
-
-        if (!username) {
-          setAccountStatus('Please enter a username.', 'error');
+        if (!username || !password) {
+          setAccountStatus('Please fill in both username and password.', 'error');
           return;
         }
 
-        if (password.length < 4) {
-          setAccountStatus('Password must be at least 4 characters.', 'error');
+        const accounts = readAccounts();
+        const storedUser = accounts[username];
+
+        if (!storedUser || storedUser.password !== password) {
+          setAccountStatus('Invalid username or password.', 'error');
+          return;
+        }
+
+        const account = { id: storedUser.id || username, username: storedUser.username || username };
+        setActiveAccount(account);
+        setAccountStatus('Logged in successfully.', 'success');
+        closeModal(accountModal);
+      });
+
+      createAccountForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const username = normalizeUsername(createUsername.value);
+        const password = createPassword.value;
+        const confirmPassword = createConfirmPassword.value;
+
+        if (!username || !password) {
+          setAccountStatus('Username and password are required.', 'error');
           return;
         }
 
@@ -1033,88 +721,23 @@
           return;
         }
 
-        const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
-        const existingAccount = accounts.find((account) => normalizeUsername(account.username) === normalizeUsername(username));
-
-        if (existingAccount) {
-          setAccountStatus('That username already exists. Please choose another one.', 'error');
+        const accounts = readAccounts();
+        if (accounts[username]) {
+          setAccountStatus('That username already exists.', 'error');
           return;
         }
 
-        const newAccount = {
-          id: `user_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+        accounts[username] = {
+          id: username,
           username,
           password
         };
+        writeAccounts(accounts);
 
-        accounts.push(newAccount);
-        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-        setActiveAccount(newAccount);
-        updateAccountButtons();
-        mapEntries = loadMapEntries();
-        renderMapMarkers();
-        renderEntriesList();
-        createAccountForm.reset();
-        setAccountStatus(`Welcome, ${username}! Your entries are now saved to your account.`, 'success');
-
-        setTimeout(() => {
-          closeModal(accountModal);
-          setAccountStatus('', '');
-        }, 700);
-      }
-
-      function handleLogin(event) {
-        event.preventDefault();
-
-        const username = String(loginUsername.value || '').trim();
-        const password = String(loginPassword.value || '');
-
-        if (!username || !password) {
-          setAccountStatus('Please enter both username and password.', 'error');
-          return;
-        }
-
-        const accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
-        const matchedAccount = accounts.find((account) => normalizeUsername(account.username) === normalizeUsername(username) && account.password === password);
-
-        if (!matchedAccount) {
-          setAccountStatus('Incorrect username or password.', 'error');
-          return;
-        }
-
-        setActiveAccount(matchedAccount);
-        updateAccountButtons();
-        mapEntries = loadMapEntries();
-        renderMapMarkers();
-        renderEntriesList();
-        loginForm.reset();
-        setAccountStatus(`Logged in as ${matchedAccount.username}.`, 'success');
-
-        setTimeout(() => {
-          closeModal(accountModal);
-          setAccountStatus('', '');
-        }, 700);
-      }
-
-      function handleLogout() {
-        clearActiveAccount();
-        mapEntries = loadMapEntries();
-        renderMapMarkers();
-        renderEntriesList();
-      }
-
-      createAccountBtn.addEventListener('click', () => {
-        showAccountMode('create');
-        openModal(accountModal);
-      });
-
-      loginAccountBtn.addEventListener('click', () => {
-        showAccountMode('login');
-        openModal(accountModal);
-      });
-
-      logoutBtn.addEventListener('click', () => {
-        handleLogout();
+        const account = { id: username, username };
+        setActiveAccount(account);
+        setAccountStatus('Account created successfully.', 'success');
+        closeModal(accountModal);
       });
 
       accountModeButtons.forEach((button) => {
@@ -1123,45 +746,63 @@
         });
       });
 
-      accountModal.addEventListener('click', (event) => {
-        if (event.target === accountModal) {
-          closeModal(accountModal);
-          setAccountStatus('', '');
-        }
-      });
-
-      loginForm.addEventListener('submit', handleLogin);
-      createAccountForm.addEventListener('submit', handleCreateAccount);
-
       saveMarkerBtn.addEventListener('click', () => {
-        const rect = mapLayer.getBoundingClientRect();
-        saveMapMarkerFromClick(rect.left + rect.width * 0.5, rect.top + rect.height * 0.5);
+        const activeAccount = getActiveAccount();
+        if (!activeAccount) {
+          setAccountStatus('Please create an account or log in before saving entries.', 'error');
+          showAccountMode('login');
+          openModal(accountModal);
+          return;
+        }
+        const hasMarker = dinoSelect.value || notesInput.value.trim();
+        if (!hasMarker) {
+          setAccountStatus('Choose a dinosaur before saving a marker.', 'error');
+          return;
+        }
+        saveMapMarkerFromClick(mapLayer.getBoundingClientRect().left + 10, mapLayer.getBoundingClientRect().top + 10);
       });
 
       mapLayer.addEventListener('click', (event) => {
+        const activeAccount = getActiveAccount();
+        if (!activeAccount) {
+          setAccountStatus('Please create an account or log in before saving entries.', 'error');
+          showAccountMode('login');
+          openModal(accountModal);
+          return;
+        }
         saveMapMarkerFromClick(event.clientX, event.clientY);
       });
 
       zoomInBtn.addEventListener('click', () => {
-        mapZoom = Math.min(mapZoom + 0.25, 2.5);
-        document.querySelector('.map-image').style.transform = `scale(${mapZoom})`;
+        mapZoom = Math.min(mapZoom + 0.1, 2.2);
+        mapLayer.style.transform = `scale(${mapZoom})`;
       });
 
       zoomOutBtn.addEventListener('click', () => {
-        mapZoom = Math.max(mapZoom - 0.25, 0.75);
-        document.querySelector('.map-image').style.transform = `scale(${mapZoom})`;
+        mapZoom = Math.max(mapZoom - 0.1, 0.8);
+        mapLayer.style.transform = `scale(${mapZoom})`;
       });
 
       zoomResetBtn.addEventListener('click', () => {
         mapZoom = 1;
-        document.querySelector('.map-image').style.transform = 'scale(1)';
+        mapLayer.style.transform = 'scale(1)';
       });
 
-      updateAccountButtons();
+      accountModal.addEventListener('click', (event) => {
+        if (event.target === accountModal) closeModal(accountModal);
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && accountModal.classList.contains('visible')) {
+          closeModal(accountModal);
+        }
+      });
+
       renderMapMarkers();
       renderEntriesList();
-      renderBoard();
       renderFeatured();
+      renderBoard();
+      updateAccountButtons();
     })();
   </script>
 </body>
