@@ -1,92 +1,95 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Path of Titans — Registro de Gondwa</title>
+    <title>POT Dino Location Bulletin Board</title>
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --panel-bg: #151c2c;
-            --panel-border: #232d42;
-            --accent-color: #6366f1;
-            --accent-hover: #4f46e5;
-            --text-color: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger-color: #ef4444;
-            --danger-dark: #b91c1c;
-            --success-color: #22c55e;
-            --modal-bg: rgba(4, 8, 15, 0.78);
-            --shadow: rgba(0, 0, 0, 0.45);
-            --discord-color: #5865F2;
+            --bg: #0b1020;
+            --panel: #121b2d;
+            --panel-strong: #1a2940;
+            --panel-soft: #111827;
+            --border: #2a3b5d;
+            --text: #edf2ff;
+            --muted: #a9b7d0;
+            --accent: #7c9cff;
+            --accent-strong: #5877f2;
+            --success: #38d39f;
+            --warning: #f6c453;
+            --danger: #ff5d73;
+            --shadow: rgba(0, 0, 0, 0.38);
         }
 
         * {
             box-sizing: border-box;
+        }
+
+        html, body {
             margin: 0;
-            padding: 0;
+            min-height: 100%;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(180deg, #09111d 0%, #0f172a 100%);
+            color: var(--text);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+        }
+
+        button, input, textarea, select {
+            font: inherit;
         }
 
         header {
-            background-color: var(--panel-bg);
+            background: rgba(17, 24, 39, 0.95);
+            border-bottom: 1px solid var(--border);
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--panel-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
             flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
 
-        .header-text {
-            flex: 1;
-            min-width: 220px;
-            text-align: center;
-        }
-
-        .brand-header {
-            display: inline-flex;
+        .brand {
+            display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            text-align: left;
+            gap: 0.9rem;
         }
 
-        .brand-logo {
-            width: 64px;
-            height: 64px;
+        .brand img {
+            width: 58px;
+            height: 58px;
             object-fit: cover;
             border-radius: 14px;
-            border: 1px solid var(--panel-border);
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
-            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
         }
 
         .brand-copy {
             display: flex;
             flex-direction: column;
-            justify-content: center;
         }
 
-        header h1 {
-            font-size: 1.5rem;
-            color: #fff;
-            letter-spacing: 0.5px;
+        .brand-copy h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            letter-spacing: 0.02em;
         }
 
-        header p {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            margin-top: 0.2rem;
+        .brand-copy p {
+            margin: 0.2rem 0 0;
+            font-size: 0.78rem;
+            color: var(--muted);
         }
 
         .header-actions {
@@ -96,833 +99,803 @@
             flex-wrap: wrap;
         }
 
-        .discord-btn,
-        .secondary-btn,
-        .login-btn,
-        .btn-primary,
-        .btn-danger {
-            border-radius: 999px;
-            padding: 0.65rem 1rem;
-            font-weight: 700;
+        .button,
+        .secondary-button,
+        .danger-button {
+            padding: 0.72rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            color: var(--text);
+            background: transparent;
             cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+            transition: transform 0.15s ease, opacity 0.15s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
             justify-content: center;
         }
 
-        .discord-btn {
-            background-color: var(--discord-color);
-            border: 1px solid var(--discord-color);
-            color: white;
+        .button {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #08101d;
+            font-weight: 700;
         }
 
-        .secondary-btn,
-        .btn-primary,
-        .btn-danger {
-            border-radius: 10px;
+        .secondary-button {
+            background: rgba(124, 156, 255, 0.12);
         }
 
-        .secondary-btn {
-            background: transparent;
-            border: 1px solid var(--panel-border);
-            color: var(--text-color);
+        .danger-button {
+            color: #ffd9dd;
+            border-color: rgba(255, 93, 115, 0.5);
+            background: rgba(255, 93, 115, 0.08);
         }
 
-        .login-btn,
-        .btn-primary {
-            background-color: var(--accent-color);
-            border: 1px solid var(--accent-color);
-            color: white;
-        }
-
-        .discord-btn:hover,
-        .secondary-btn:hover,
-        .login-btn:hover,
-        .btn-primary:hover,
-        .btn-danger:hover {
+        .button:hover,
+        .secondary-button:hover,
+        .danger-button:hover {
             transform: translateY(-1px);
         }
 
-        .main-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.25rem;
+        .page-shell {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 1.25rem;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+            gap: 1.5rem;
         }
 
-        @media (min-width: 1024px) {
-            .main-container {
-                grid-template-columns: minmax(0, 1fr) 340px;
-            }
-        }
-
-        .map-wrapper {
-            position: relative;
-            width: min(82vmin, 960px);
-            max-width: calc(100vw - 2rem);
-            height: auto;
-            margin: 0 auto;
-            background-color: #08111e;
-            border-radius: 12px;
+        .panel {
+            background: rgba(18, 27, 45, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 15px 30px var(--shadow);
             overflow: hidden;
-            border: 1px solid var(--panel-border);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            user-select: none;
         }
 
-        .map-viewport {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            cursor: grab;
-            background: #08111e;
-            touch-action: none;
+        .panel-head {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
         }
 
-        .map-viewport.dragging {
-            cursor: grabbing;
+        .panel-head h2 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .map-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 720px;
+        }
+
+        .map-frame {
+            position: relative;
+            padding: 1rem;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95));
+        }
+
+        .map-view {
+            position: relative;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            background: #08121f;
+            min-height: 540px;
         }
 
         .map-layer {
             position: relative;
             width: 100%;
-            height: 100%;
+            min-height: 540px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transform-origin: center center;
-            will-change: transform;
-            transition: transform 0.08s ease-out;
+            background: #071421;
+            touch-action: none;
+            cursor: crosshair;
         }
 
-        .gondwa-map-img {
-            display: block;
+        .map-image {
             width: 100%;
             height: 100%;
-            max-width: 100%;
-            max-height: 100%;
+            min-height: 540px;
             object-fit: contain;
-            transform-origin: center center;
+            pointer-events: none;
             user-select: none;
-            pointer-events: auto;
-            cursor: grab;
-            -webkit-user-drag: none;
-            touch-action: none;
-            position: relative;
-            z-index: 1;
         }
 
-        .map-viewport.dragging .gondwa-map-img {
-            cursor: grabbing;
-        }
-
-        .map-zoom-controls {
+        .zoom-controls {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            z-index: 20;
+            top: 1rem;
+            right: 1rem;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            background: rgba(11, 15, 25, 0.56);
-            border: 1px solid var(--panel-border);
+            z-index: 2;
+            background: rgba(15, 21, 33, 0.75);
+            border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 0.4rem;
-            backdrop-filter: blur(2px);
+            padding: 0.45rem;
+            backdrop-filter: blur(4px);
         }
 
-        .zoom-btn {
+        .zoom-controls button {
             width: 38px;
             height: 38px;
-            border: 1px solid var(--panel-border);
             border-radius: 10px;
-            background: rgba(17, 24, 39, 0.85);
-            color: white;
-            font-size: 1.25rem;
+            border: 1px solid var(--border);
+            background: rgba(18, 27, 45, 0.8);
+            color: var(--text);
             cursor: pointer;
-            z-index: 21;
-        }
-
-        .zoom-btn:hover {
-            border-color: var(--accent-color);
+            font-size: 1.25rem;
         }
 
         .marker {
             position: absolute;
-            width: 11px;
-            height: 11px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            border: 2px solid #ffffff;
-            box-shadow: 0 0 12px rgba(0,0,0,0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
-            color: #fff;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 10;
+            border: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 0 12px rgba(0,0,0,0.7);
+            z-index: 1;
         }
 
-        .marker:hover {
-            transform: translate(-50%, -50%) scale(1.2);
-            z-index: 20;
+        .map-form {
+            display: grid;
+            grid-template-columns: 1.5fr 2fr auto;
+            gap: 0.75rem;
+            padding: 1rem;
+            align-items: end;
+            border-top: 1px solid var(--border);
+            background: rgba(255,255,255,0.01);
         }
 
-        .panel {
-            background-color: var(--panel-bg);
-            padding: 1.25rem;
-            border-radius: 12px;
-            border: 1px solid var(--panel-border);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            max-height: 82vh;
-            overflow-y: auto;
-        }
-
-        .form-group {
+        .field {
             display: flex;
             flex-direction: column;
             gap: 0.4rem;
         }
 
-        label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-muted);
+        .field label {
+            color: var(--muted);
+            font-size: 0.72rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.06em;
+            font-weight: 700;
         }
 
-        select, input {
+        .field select,
+        .field input,
+        .field textarea,
+        .field-file input {
             width: 100%;
+            border-radius: 10px;
+            background: #0b1120;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.8rem 0.9rem;
+        }
+
+        .field textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .field-file {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .field-file input {
             padding: 0.7rem 0.8rem;
-            background-color: var(--bg-color);
-            border: 1px solid var(--panel-border);
-            border-radius: 6px;
-            color: var(--text-color);
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.2s;
         }
 
-        optgroup {
-            background-color: var(--panel-bg);
-            color: var(--accent-color);
-            font-weight: bold;
+        .map-list {
+            padding: 0 1rem 1rem;
         }
 
-        option {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-        }
-
-        select:focus, input:focus {
-            border-color: var(--accent-color);
-        }
-
-        .entries-list {
-            flex: 1;
-            overflow-y: auto;
+        .entry-list {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            min-height: 150px;
-            padding-right: 4px;
+            gap: 0.65rem;
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 0.25rem;
         }
 
         .entry-card {
-            background-color: var(--bg-color);
-            padding: 0.65rem 0.8rem;
-            border-radius: 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-left: 4px solid var(--accent-color);
+            gap: 0.8rem;
+            background: rgba(17, 24, 39, 0.8);
+            border-left: 4px solid var(--accent);
+            border-radius: 10px;
+            padding: 0.75rem 0.8rem;
         }
 
-        .entry-info h4 {
-            font-size: 0.85rem;
-            color: #fff;
+        .entry-card h4 {
+            margin: 0 0 0.2rem;
+            font-size: 0.95rem;
         }
 
-        .entry-info p {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            margin-top: 2px;
+        .entry-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.76rem;
         }
 
-        .delete-btn {
-            background: none;
+        .entry-card button {
+            background: transparent;
             border: none;
-            color: var(--text-muted);
+            color: var(--muted);
+            font-size: 1.3rem;
             cursor: pointer;
-            font-size: 1.2rem;
-            padding: 0.2rem 0.4rem;
-            line-height: 1;
-            transition: color 0.2s;
         }
 
-        .delete-btn:hover {
-            color: var(--danger-color);
+        .board-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 720px;
         }
 
-        .btn-danger {
-            background-color: transparent;
-            color: var(--danger-color);
-            border: 1px solid var(--danger-color);
-            padding: 0.6rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
+        .board-content {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
-        .btn-danger:hover {
-            background-color: var(--danger-color);
-            color: white;
+        .board-empty {
+            background: rgba(11, 17, 32, 0.9);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 1.4rem;
+            color: var(--muted);
+            text-align: center;
         }
 
-        .btn-danger:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
+        .board-posts {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
-        .save-status {
-            min-height: 1.2rem;
-            font-size: 0.75rem;
-            color: var(--success-color);
+        .board-post {
+            background: rgba(11, 17, 32, 0.88);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1rem;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
         }
 
-        .user-pill {
-            display: inline-flex;
+        .post-top {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            width: fit-content;
-            padding: 0.45rem 0.7rem;
-            border-radius: 999px;
-            background: rgba(99, 102, 241, 0.12);
-            border: 1px solid rgba(99, 102, 241, 0.35);
-            color: #dfe6ff;
-            font-size: 0.7rem;
+            gap: 1rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .post-top h3 {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+
+        .post-toolbar {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .tiny-button {
+            padding: 0.5rem 0.7rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            background: rgba(124, 156, 255, 0.09);
+            color: var(--text);
             font-weight: 700;
-            letter-spacing: 0.03em;
+        }
+
+        .tiny-button.danger {
+            border-color: rgba(255, 93, 115, 0.5);
+            color: #ffd5dc;
+          background: rgba(255, 93, 115, 0.06);
+        }
+
+        .board-post p {
+            margin: 0.65rem 0 0;
+            color: var(--text);
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .board-post img {
+            width: 100%;
+            max-height: 320px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-top: 0.85rem;
+            border: 1px solid var(--border);
+        }
+
+        .admin-panel {
+            background: rgba(124, 156, 255, 0.06);
+            border: 1px solid rgba(124, 156, 255, 0.25);
+            border-radius: 14px;
+            padding: 1rem;
+            display: none;
+        }
+
+        .admin-panel.visible {
+            display: block;
+        }
+
+        .admin-panel h3 {
+            margin-top: 0;
+            margin-bottom: 0.8rem;
+        }
+
+        .admin-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .inline-note {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .media-preview {
+            display: none;
+            margin-top: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            max-height: 220px;
+        }
+
+        .media-preview.visible {
+            display: block;
+        }
+
+        .media-preview img {
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
         }
 
         .hidden {
             display: none !important;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 1.5rem;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            border: 1px dashed var(--panel-border);
-            border-radius: 6px;
-        }
-
         .modal {
             position: fixed;
             inset: 0;
+            background: rgba(2, 6, 15, 0.72);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 100;
+            padding: 1rem;
         }
 
         .modal.visible {
             display: flex;
         }
 
-        .modal-backdrop {
-            position: absolute;
-            inset: 0;
-            background: var(--modal-bg);
-        }
-
         .modal-card {
-            position: relative;
-            width: min(440px, calc(100vw - 2rem));
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 14px;
-            box-shadow: 0 18px 50px var(--shadow);
-            padding: 1.5rem;
-            z-index: 1;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.9rem;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            cursor: pointer;
+            width: min(440px, 100%);
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.2rem;
+            box-shadow: 0 24px 65px rgba(0,0,0,0.35);
         }
 
         .modal-card h3 {
-            margin-bottom: 0.5rem;
-            font-size: 1.3rem;
-            color: white;
+            margin-top: 0;
         }
 
         .modal-card p {
-            margin-bottom: 1rem;
-            color: var(--text-muted);
+            color: var(--muted);
             line-height: 1.5;
         }
 
-        .auth-toggle {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--panel-border);
-            border-radius: 10px;
-            padding: 0.35rem;
-        }
-
-        .auth-tab {
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            padding: 0.7rem 0.8rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        .auth-tab.active {
-            background: rgba(99, 102, 241, 0.2);
-            color: white;
-            border: 1px solid rgba(99, 102, 241, 0.4);
-        }
-
-        .auth-form {
+        .modal-form {
             display: flex;
             flex-direction: column;
-            gap: 0.9rem;
+            gap: 0.8rem;
+            margin-top: 1rem;
         }
 
-        .auth-form.hidden {
-            display: none;
+        .status {
+            min-height: 1.2rem;
+            color: var(--muted);
+            font-size: 0.8rem;
         }
 
-        .auth-submit,
-        .guest-link {
-            width: 100%;
-            padding: 0.9rem 1rem;
-            border-radius: 10px;
-            border: 1px solid var(--accent-color);
-            background: var(--accent-color);
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 0.2rem;
-            transition: transform 0.15s ease, background 0.15s ease;
+        .status.error {
+            color: #ff9aa6;
         }
 
-        .auth-submit:hover,
-        .guest-link:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
+        .status.success {
+            color: #93f0c4;
         }
 
-        .guest-link {
-            margin-top: 0.9rem;
-            background: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--panel-border);
+        @media (max-width: 980px) {
+            .page-shell {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-            margin-top: 1.25rem;
-        }
-
-        .modal-actions button {
-            padding: 0.7rem 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--panel-border);
-            cursor: pointer;
-            font-weight: 700;
-        }
-
-        .cancel-btn {
-            background: transparent;
-            color: var(--text-color);
-        }
-
-        .confirm-btn {
-            background: var(--danger-color);
-            border-color: var(--danger-dark);
-            color: white;
-        }
-
-        @media (max-width: 640px) {
-            header {
-                justify-content: center;
+        @media (max-width: 700px) {
+            .map-form {
+                grid-template-columns: 1fr;
             }
 
-            .header-text {
-                width: 100%;
-            }
-
-            .brand-header {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .brand-copy {
-                align-items: center;
-                text-align: center;
+            .brand-copy h1 {
+                font-size: 1rem;
             }
         }
     </style>
 </head>
 <body>
     <header>
-        <div class="header-text">
-            <div class="brand-header">
-                <img src="./logo.jpg" alt="POT Dino Location logo" class="brand-logo">
-                <div class="brand-copy">
-                    <h1>Path of Titans — Registro de Gondwa</h1>
-                    <p>Haz clic en cualquier ubicación del mapa para registrar el avistamiento de tu dinosaurio.</p>
-                </div>
+        <div class="brand">
+            <img src="./logo.jpg" alt="POT Dino Location logo">
+            <div class="brand-copy">
+                <h1>POT Dino Location</h1>
+                <p>Gondwa map and bulletin board</p>
             </div>
         </div>
 
         <div class="header-actions">
-            <a class="discord-btn" href="https://discord.gg/f9PudgP6J" target="_blank" rel="noreferrer">Discord</a>
-            <button id="createAccountBtn" class="secondary-btn" type="button">Create account</button>
-            <button id="accountBtn" class="login-btn" type="button">Log in</button>
+            <a class="secondary-button" href="#board-panel">Bulletin Board</a>
+            <button id="adminAccessBtn" class="button" type="button">Admin access</button>
         </div>
     </header>
 
-    <div class="main-container">
-        <div class="map-wrapper" id="mapContainer">
-            <div class="map-viewport" id="mapViewport">
-                <div class="map-zoom-controls">
-                    <button type="button" class="zoom-btn" id="zoomInBtn" aria-label="Zoom in">+</button>
-                    <button type="button" class="zoom-btn" id="zoomOutBtn" aria-label="Zoom out">−</button>
-                    <button type="button" class="zoom-btn" id="zoomResetBtn" aria-label="Reset zoom">↺</button>
+    <main class="page-shell">
+        <section class="panel map-panel" aria-label="Map panel">
+            <div class="panel-head">
+                <h2>Gondwa map</h2>
+            </div>
+
+            <div class="map-frame">
+                <div class="map-view" id="mapView">
+                    <div class="zoom-controls" aria-label="Map zoom controls">
+                        <button type="button" id="zoomInBtn" aria-label="Zoom in">+</button>
+                        <button type="button" id="zoomOutBtn" aria-label="Zoom out">−</button>
+                        <button type="button" id="zoomResetBtn" aria-label="Reset zoom">↺</button>
+                    </div>
+                    <div class="map-layer" id="mapLayer">
+                        <img class="map-image" src="./gondwa-map.jpg" alt="Gondwa map">
+                    </div>
                 </div>
-                <div class="map-layer" id="mapLayer">
-                    <img src="./gondwa-map.jpg" alt="Mapa de Gondwa de Path of Titans" class="gondwa-map-img" id="gondwaMapImg">
-                </div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="form-group">
-                <label for="dinoSelect">Seleccionar Dinosaurio / Criatura</label>
-                <select id="dinoSelect">
-                    <optgroup label="Carnívoros Terrestres">
-                        <option value="Achillobator" data-color="#ef4444">Achillobator</option>
-                        <option value="Alioramus" data-color="#f87171">Alioramus</option>
-                        <option value="Allosaurus" data-color="#dc2626">Allosaurus</option>
-                        <option value="Ceratosaurus" data-color="#b91c1c">Ceratosaurus</option>
-                        <option value="Concavenator" data-color="#f97316">Concavenator</option>
-                        <option value="Daspletosaurus" data-color="#ea580c">Daspletosaurus</option>
-                        <option value="Deinonychus" data-color="#fb923c">Deinonychus</option>
-                        <option value="Latenivenatrix" data-color="#f59e0b">Latenivenatrix</option>
-                        <option value="Megalania" data-color="#d97706">Megalania</option>
-                        <option value="Metriacanthosaurus" data-color="#b45309">Metriacanthosaurus</option>
-                        <option value="Pycnonemosaurus" data-color="#eab308">Pycnonemosaurus</option>
-                        <option value="Sarcosuchus" data-color="#84cc16">Sarcosuchus</option>
-                        <option value="Spinosaurus" data-color="#16a34a">Spinosaurus</option>
-                        <option value="Suchomimus" data-color="#15803d">Suchomimus</option>
-                        <option value="Tyranotitan" data-color="#7c3aed">Tyranotitan</option>
-                        <option value="Tyrannosaurus Rex" data-color="#991b1b">Tyrannosaurus Rex</option>
-                    </optgroup>
-                    <optgroup label="Herbívoros Terrestres">
-                        <option value="Albertaceratops" data-color="#3b82f6">Albertaceratops</option>
-                        <option value="Amargasaurus" data-color="#60a5fa">Amargasaurus</option>
-                        <option value="Anodontosaurus" data-color="#2563eb">Anodontosaurus</option>
-                        <option value="Barsboldia" data-color="#1d4ed8">Barsboldia</option>
-                        <option value="Camptosaurus" data-color="#38bdf8">Camptosaurus</option>
-                        <option value="Deinocheirus" data-color="#0284c7">Deinocheirus</option>
-                        <option value="Eotriceratops" data-color="#0369a1">Eotriceratops</option>
-                        <option value="Iguanodon" data-color="#6366f1">Iguanodon</option>
-                        <option value="Kentrosaurus" data-color="#4f46e5">Kentrosaurus</option>
-                        <option value="Lambeosaurus" data-color="#4338ca">Lambeosaurus</option>
-                        <option value="Miragaia" data-color="#818cf8">Miragaia</option>
-                        <option value="Pachycephalosaurus" data-color="#a855f7">Pachycephalosaurus</option>
-                        <option value="Stegosaurus" data-color="#9333ea">Stegosaurus</option>
-                        <option value="Struthiomimus" data-color="#c084fc">Struthiomimus</option>
-                        <option value="Styracosaurus" data-color="#7e22ce">Styracosaurus</option>
-                        <option value="Trike (Eotriceratops)" data-color="#6b21a8">Trike</option>
-                    </optgroup>
-                    <optgroup label="Voladores (Pterosaurios)">
-                        <option value="Hatzegopteryx" data-color="#ec4899">Hatzegopteryx</option>
-                        <option value="Rhamphorhynchus" data-color="#f43f5e">Rhamphorhynchus</option>
-                        <option value="Thalassodromeus" data-color="#db2777">Thalassodromeus</option>
-                    </optgroup>
-                    <optgroup label="Acuáticos / Marinos">
-                        <option value="Eurhinosaurus" data-color="#06b6d4">Eurhinosaurus</option>
-                        <option value="Kaiwhekea" data-color="#0891b2">Kaiwhekea</option>
-                        <option value="Tylosaurus" data-color="#0e7490">Tylosaurus</option>
-                    </optgroup>
-                </select>
             </div>
 
-            <div class="form-group">
-                <label for="notesInput">Detalles / Crecimiento / Notas</label>
-                <input type="text" id="notesInput" placeholder="Ej. Adulto, Cerca de Impact Crater...">
-            </div>
-
-            <div class="user-pill" id="userPill">Guest mode</div>
-
-            <hr style="border-color: var(--panel-border);">
-
-            <div class="form-group" style="flex: 1;">
-                <label>Registros en Gondwa (<span id="count">0</span>)</label>
-                <div class="entries-list" id="entries"></div>
-            </div>
-
-            <button class="btn-primary" id="saveMapBtn" type="button">Save map</button>
-            <div class="save-status" id="saveStatus" aria-live="polite"></div>
-            <button class="btn-danger" id="clearAllBtn" type="button">Borrar todos los marcadores</button>
-        </div>
-    </div>
-
-    <div id="clearModal" class="modal" aria-hidden="true">
-        <div class="modal-backdrop" data-close="clear"></div>
-        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="clearTitle">
-            <button type="button" class="modal-close" data-close="clear" aria-label="Cerrar">×</button>
-            <h3 id="clearTitle">Borrar todos los marcadores</h3>
-            <p>Esta acción eliminará todas las entradas guardadas en este mapa. No se puede deshacer.</p>
-            <div class="modal-actions">
-                <button type="button" class="cancel-btn" data-close="clear">Cancelar</button>
-                <button type="button" class="confirm-btn" id="confirmDeleteBtn">Eliminar todo</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="authModal" class="modal" aria-hidden="true">
-        <div class="modal-backdrop" data-close="auth"></div>
-        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-            <button type="button" class="modal-close" data-close="auth" aria-label="Cerrar">×</button>
-            <h3 id="authTitle">Guardar tus entradas</h3>
-            <p>Usa una cuenta local para guardar tus marcadores y volver más tarde.</p>
-
-            <div class="auth-toggle" aria-label="Authentication options">
-                <button type="button" class="auth-tab active" data-auth-tab="create">Create account</button>
-                <button type="button" class="auth-tab" data-auth-tab="login">Log in</button>
-            </div>
-
-            <form id="createAccountForm" class="auth-form">
-                <div class="form-group">
-                    <label for="authName">Nombre</label>
-                    <input id="authName" type="text" placeholder="Tu nombre de explorador" required>
+            <div class="map-form">
+                <div class="field">
+                    <label for="dinoSelect">Dinosaur</label>
+                    <select id="dinoSelect">
+                        <option value="Achillobator">Achillobator</option>
+                        <option value="Allosaurus">Allosaurus</option>
+                        <option value="Spinosaurus">Spinosaurus</option>
+                        <option value="Tyrannosaurus Rex">Tyrannosaurus Rex</option>
+                        <option value="Iguanodon">Iguanodon</option>
+                        <option value="Stegosaurus">Stegosaurus</option>
+                        <option value="Hatzegopteryx">Hatzegopteryx</option>
+                        <option value="Tylosaurus">Tylosaurus</option>
+                        <option value="Trike (Eotriceratops)">Trike</option>
+                        <option value="Other">Other</option>
+                    </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="createEmail">Correo electrónico</label>
-                    <input id="createEmail" type="email" placeholder="correo@ejemplo.com" required>
+                <div class="field">
+                    <label for="notesInput">Notes</label>
+                    <input id="notesInput" type="text" placeholder="Example: Adult female near the crater">
                 </div>
 
-                <div class="form-group">
-                    <label for="createPassword">Contraseña</label>
-                    <input id="createPassword" type="password" placeholder="Crea una contraseña" required>
+                <button id="saveMarkerBtn" class="button" type="button">Save marker</button>
+            </div>
+
+            <div class="map-list">
+                <div class="entry-list" id="entriesList" aria-live="polite"></div>
+            </div>
+        </section>
+
+        <aside class="panel board-panel" id="board-panel" aria-label="Bulletin board panel">
+            <div class="panel-head">
+                <h2>Bulletin board</h2>
+                <button id="openBoardAdminBtn" class="secondary-button" type="button">Admin edit</button>
+            </div>
+
+            <div class="board-content">
+                <div id="adminPanel" class="admin-panel" aria-live="polite">
+                    <h3>Admin bulletin editor</h3>
+                    <form id="postForm" class="admin-form">
+                        <div class="field">
+                            <label for="postTitle">Title</label>
+                            <input id="postTitle" type="text" maxlength="80" placeholder="Announcement title">
+                        </div>
+
+                        <div class="field">
+                            <label for="postText">Text</label>
+                            <textarea id="postText" placeholder="Write your message here..."></textarea>
+                        </div>
+
+                        <div class="field">
+                            <label for="postMedia">Add image or GIF</label>
+                            <input id="postMedia" type="file" accept="image/*,.gif">
+                            <div id="mediaPreview" class="media-preview" aria-live="polite"></div>
+                        </div>
+
+                        <div class="inline-note">Files are stored in the browser only for this site.</div>
+                        <button class="button" type="submit">Publish post</button>
+                    </form>
                 </div>
 
-                <button type="submit" class="auth-submit">Create account</button>
+                <div id="boardPosts" class="board-posts" aria-live="polite"></div>
+            </div>
+        </aside>
+    </main>
+
+    <div id="adminModal" class="modal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+            <h3 id="adminTitle">Admin access</h3>
+            <p>Only the authorized email can access the bulletin board editor.</p>
+
+            <form id="adminForm" class="modal-form">
+                <div class="field">
+                    <label for="adminEmail">Email</label>
+                    <input id="adminEmail" type="email" placeholder="name@example.com" required>
+                </div>
+                <button class="button" type="submit">Enter admin portal</button>
+                <div id="adminStatus" class="status" aria-live="polite"></div>
             </form>
-
-            <form id="loginForm" class="auth-form hidden">
-                <div class="form-group">
-                    <label for="loginEmail">Correo electrónico</label>
-                    <input id="loginEmail" type="email" placeholder="correo@ejemplo.com" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="loginPassword">Contraseña</label>
-                    <input id="loginPassword" type="password" placeholder="Tu contraseña" required>
-                </div>
-
-                <button type="submit" class="auth-submit">Log in</button>
-            </form>
-
-            <button type="button" class="guest-link" id="continueGuestBtn">Continue as guest</button>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const mapContainer = document.getElementById('mapContainer');
-            const mapViewport = document.getElementById('mapViewport');
-            const mapLayer = document.getElementById('mapLayer');
-            const mapImg = document.getElementById('gondwaMapImg');
+        (function () {
+            const ADMIN_EMAIL = 'zimaris.martinez@gmail.com';
+            const boardStorageKey = 'pot_board_posts';
+            const mapStorageKey = 'pot_dino_map_entries';
+            const adminFlagKey = 'pot_admin_authorized';
+            const adminEmailKey = 'pot_admin_email';
+
+            const adminAccessBtn = document.getElementById('adminAccessBtn');
+            const openBoardAdminBtn = document.getElementById('openBoardAdminBtn');
+            const adminModal = document.getElementById('adminModal');
+            const adminForm = document.getElementById('adminForm');
+            const adminStatus = document.getElementById('adminStatus');
+            const adminEmailInput = document.getElementById('adminEmail');
+            const adminPanel = document.getElementById('adminPanel');
+            const postForm = document.getElementById('postForm');
+            const postTitle = document.getElementById('postTitle');
+            const postText = document.getElementById('postText');
+            const postMedia = document.getElementById('postMedia');
+            const boardPosts = document.getElementById('boardPosts');
+            const mediaPreview = document.getElementById('mediaPreview');
             const dinoSelect = document.getElementById('dinoSelect');
             const notesInput = document.getElementById('notesInput');
-            const entriesContainer = document.getElementById('entries');
-            const countSpan = document.getElementById('count');
-            const clearAllBtn = document.getElementById('clearAllBtn');
-            const createAccountBtn = document.getElementById('createAccountBtn');
-            const accountBtn = document.getElementById('accountBtn');
-            const saveMapBtn = document.getElementById('saveMapBtn');
-            const saveStatus = document.getElementById('saveStatus');
-            const userPill = document.getElementById('userPill');
-            const clearModal = document.getElementById('clearModal');
-            const authModal = document.getElementById('authModal');
-            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-            const createAccountForm = document.getElementById('createAccountForm');
-            const loginForm = document.getElementById('loginForm');
-            const authTabs = document.querySelectorAll('.auth-tab');
-            const continueGuestBtn = document.getElementById('continueGuestBtn');
+            const saveMarkerBtn = document.getElementById('saveMarkerBtn');
+            const entriesList = document.getElementById('entriesList');
+            const mapLayer = document.getElementById('mapLayer');
             const zoomInBtn = document.getElementById('zoomInBtn');
             const zoomOutBtn = document.getElementById('zoomOutBtn');
             const zoomResetBtn = document.getElementById('zoomResetBtn');
 
-            const guestKey = 'gondwa_pot_dino_entries_guest';
-            const currentUserKey = 'gondwa_current_user';
-            const usersKey = 'gondwa_users';
-            const minZoom = 0.35;
-            const maxZoom = 4;
-            const zoomStep = 0.25;
-            let zoomLevel = 1;
-            let panX = 0;
-            let panY = 0;
-            let dragStartX = 0;
-            let dragStartY = 0;
-            let dragStartPanX = 0;
-            let dragStartPanY = 0;
-            let isDraggingMap = false;
-            let mapMovedDuringGesture = false;
-            let entries = [];
-
-            function clamp(value, min, max) {
-                return Math.min(Math.max(value, min), max);
-            }
+            let mapEntries = loadMapEntries();
+            let boardEntries = loadBoardEntries();
+            let adminAuthorized = isAdminAuthorized();
+            let selectedMediaData = '';
 
             function normalizeEmail(value) {
                 return String(value || '').trim().toLowerCase();
             }
 
-            function slugify(value) {
-                return String(value || '')
-                    .trim()
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '_')
-                    .replace(/^_+|_+$/g, '') || 'user';
+            function isAdminAuthorized() {
+                const storedFlag = localStorage.getItem(adminFlagKey) === 'true';
+                const storedEmail = normalizeEmail(localStorage.getItem(adminEmailKey));
+                return storedFlag && storedEmail === normalizeEmail(ADMIN_EMAIL);
             }
 
-            function getCurrentUser() {
+            function loadBoardEntries() {
                 try {
-                    return JSON.parse(localStorage.getItem(currentUserKey)) || null;
-                } catch (error) {
-                    return null;
-                }
-            }
-
-            function setCurrentUser(user) {
-                localStorage.setItem(currentUserKey, JSON.stringify(user));
-            }
-
-            function clearCurrentUser() {
-                localStorage.removeItem(currentUserKey);
-            }
-
-            function getUsers() {
-                try {
-                    return JSON.parse(localStorage.getItem(usersKey)) || {};
-                } catch (error) {
-                    return {};
-                }
-            }
-
-            function saveUsers(users) {
-                localStorage.setItem(usersKey, JSON.stringify(users));
-            }
-
-            function userStorageKey(email) {
-                const trimmed = normalizeEmail(email);
-                return `gondwa_pot_dino_entries_${slugify(trimmed)}`;
-            }
-
-            function loadEntriesFromStorage(storageKey) {
-                try {
-                    return JSON.parse(localStorage.getItem(storageKey)) || [];
+                    const data = JSON.parse(localStorage.getItem(boardStorageKey) || '[]');
+                    return Array.isArray(data) ? data : [];
                 } catch (error) {
                     return [];
                 }
             }
 
-            function getActiveStorageKey() {
-                const user = getCurrentUser();
-                if (!user || !user.email) return guestKey;
-                return userStorageKey(user.email);
+            function saveBoardEntries() {
+                localStorage.setItem(boardStorageKey, JSON.stringify(boardEntries));
             }
 
-            function updateUserPill() {
-                const user = getCurrentUser();
-                if (!user || !user.email) {
-                    userPill.textContent = 'Guest mode';
-                    userPill.classList.remove('hidden');
+            function loadMapEntries() {
+                try {
+                    const data = JSON.parse(localStorage.getItem(mapStorageKey) || '[]');
+                    return Array.isArray(data) ? data : [];
+                } catch (error) {
+                    return [];
+                }
+            }
+
+            function saveMapEntries() {
+                localStorage.setItem(mapStorageKey, JSON.stringify(mapEntries));
+            }
+
+            function renderBoard() {
+                boardPosts.innerHTML = '';
+
+                if (!boardEntries.length) {
+                    boardPosts.innerHTML = '<div class="board-empty">No bulletin board posts yet. Add a new update from the admin editor.</div>';
                     return;
                 }
 
-                userPill.textContent = `Signed in as ${user.name || 'Explorer'}`;
-                userPill.classList.remove('hidden');
+                const fragment = document.createDocumentFragment();
+
+                boardEntries.forEach((post) => {
+                    const card = document.createElement('article');
+                    card.className = 'board-post';
+
+                    const top = document.createElement('div');
+                    top.className = 'post-top';
+
+                    const title = document.createElement('h3');
+                    title.textContent = post.title || 'Announcement';
+
+                    const toolbar = document.createElement('div');
+                    toolbar.className = 'post-toolbar';
+
+                    if (adminAuthorized) {
+                        const editButton = document.createElement('button');
+                        editButton.type = 'button';
+                        editButton.className = 'tiny-button';
+                        editButton.textContent = 'Edit';
+                        editButton.addEventListener('click', () => editPost(post.id));
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.type = 'button';
+                        deleteButton.className = 'tiny-button danger';
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.addEventListener('click', () => deletePost(post.id));
+
+                        toolbar.append(editButton, deleteButton);
+                    }
+
+                    top.appendChild(title);
+                    top.appendChild(toolbar);
+
+                    const text = document.createElement('p');
+                    text.textContent = post.text || '';
+
+                    card.appendChild(top);
+                    card.appendChild(text);
+
+                    if (post.media) {
+                        const image = document.createElement('img');
+                        image.src = post.media;
+                        image.alt = post.title || 'Uploaded media';
+                        card.appendChild(image);
+                    }
+
+                    fragment.appendChild(card);
+                });
+
+                boardPosts.appendChild(fragment);
             }
 
-            function setStatus(message, isError = false) {
-                saveStatus.textContent = message;
-                saveStatus.style.color = isError ? '#fca5a5' : '#a7f3d0';
-            }
+            function renderEntries() {
+                entriesList.innerHTML = '';
 
-            function refreshEntriesFromCurrentUser() {
-                const user = getCurrentUser();
-                if (user && user.email) {
-                    entries = loadEntriesFromStorage(userStorageKey(user.email));
-                } else {
-                    entries = loadEntriesFromStorage(guestKey);
+                if (!mapEntries.length) {
+                    entriesList.innerHTML = '<div class="board-empty">No map markers yet. Click anywhere on the map to add one.</div>';
+                    return;
                 }
-                render();
+
+                mapEntries.forEach((entry, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'entry-card';
+                    item.style.borderLeftColor = entry.color || '#7c9cff';
+
+                    const info = document.createElement('div');
+                    const entryTitle = document.createElement('h4');
+                    entryTitle.textContent = entry.dino;
+                    const entryMeta = document.createElement('p');
+                    entryMeta.textContent = `X: ${Number(entry.x).toFixed(1)}% • Y: ${Number(entry.y).toFixed(1)}%`;
+                    const entryNotes = document.createElement('p');
+                    entryNotes.textContent = entry.notes ? `“${entry.notes}”` : 'No notes';
+
+                    info.append(entryTitle, entryMeta, entryNotes);
+
+                    const removeButton = document.createElement('button');
+                    removeButton.type = 'button';
+                    removeButton.textContent = '×';
+                    removeButton.title = 'Delete marker';
+                    removeButton.addEventListener('click', () => {
+                        mapEntries.splice(index, 1);
+                        saveMapEntries();
+                        renderMapMarkers();
+                        renderEntries();
+                    });
+
+                    item.append(info, removeButton);
+                    entriesList.appendChild(item);
+                });
             }
 
-            function saveEntries() {
-                const storageKey = getActiveStorageKey();
-                localStorage.setItem(storageKey, JSON.stringify(entries));
+            function renderMapMarkers() {
+                document.querySelectorAll('.map-marker').forEach((marker) => marker.remove());
 
-                const user = getCurrentUser();
-                if (user && user.email) {
-                    const users = getUsers();
-                    const emailKey = normalizeEmail(user.email);
-                    users[emailKey] = {
-                        ...users[emailKey],
-                        name: user.name || users[emailKey]?.name || 'Explorer',
-                        email: user.email,
-                        password: user.password || users[emailKey]?.password || '',
-                        entries: [...entries]
-                    };
-                    saveUsers(users);
+                mapEntries.forEach((entry) => {
+                    const marker = document.createElement('div');
+                    marker.className = 'marker map-marker';
+                    marker.style.left = `${entry.x}%`;
+                    marker.style.top = `${entry.y}%`;
+                    marker.style.backgroundColor = entry.color || '#7c9cff';
+                    marker.title = `${entry.dino}${entry.notes ? ` — ${entry.notes}` : ''}`;
+                    mapLayer.appendChild(marker);
+                });
+            }
+
+            function saveMapMarkerFromClick(clientX, clientY) {
+                const rect = mapLayer.getBoundingClientRect();
+                const xPercent = ((clientX - rect.left) / rect.width) * 100;
+                const yPercent = ((clientY - rect.top) / rect.height) * 100;
+
+                const selectedDino = dinoSelect.value || 'Other';
+                const selectedNotes = notesInput.value.trim();
+                const colors = {
+                    Achillobator: '#f87171',
+                    Allosaurus: '#ef4444',
+                    Spinosaurus: '#22c55e',
+                    'Tyrannosaurus Rex': '#f59e0b',
+                    Iguanodon: '#60a5fa',
+                    Stegosaurus: '#a78bfa',
+                    'Trike (Eotriceratops)': '#c084fc',
+                    Hatzegopteryx: '#f472b6',
+                    Tylosaurus: '#2dd4bf',
+                    Other: '#7c9cff'
+                };
+
+                mapEntries.push({
+                    dino: selectedDino,
+                    notes: selectedNotes,
+                    x: Math.min(Math.max(xPercent, 2), 98),
+                    y: Math.min(Math.max(yPercent, 2), 98),
+                    color: colors[selectedDino] || '#7c9cff'
+                });
+
+                saveMapEntries();
+                renderMapMarkers();
+                renderEntries();
+            }
+
+            function buildBoardPreview() {
+                if (!selectedMediaData) {
+                    mediaPreview.classList.remove('visible');
+                    mediaPreview.innerHTML = '';
+                    return;
                 }
-            }
 
-            function updateAccountButton() {
-                const user = getCurrentUser();
-                accountBtn.textContent = user ? 'Log out' : 'Log in';
-                createAccountBtn.textContent = user ? 'Account' : 'Create account';
-                updateUserPill();
+                mediaPreview.classList.add('visible');
+                mediaPreview.innerHTML = `<img src="${selectedMediaData}" alt="Selected media preview">`;
             }
 
             function openModal(modal) {
@@ -935,273 +908,197 @@
                 modal.setAttribute('aria-hidden', 'true');
             }
 
-            function setAuthTab(tabName) {
-                const isCreate = tabName === 'create';
-                authTabs.forEach((tab) => {
-                    const active = tab.dataset.authTab === tabName;
-                    tab.classList.toggle('active', active);
+            function toggleAdminPanel(show) {
+                adminPanel.classList.toggle('visible', show);
+            }
+
+            function updateAdminStatus() {
+                adminAuthorized = isAdminAuthorized();
+                const adminButtonText = adminAuthorized ? 'Admin enabled' : 'Admin access';
+                adminAccessBtn.textContent = adminButtonText;
+                openBoardAdminBtn.textContent = adminAuthorized ? 'Admin edit' : 'Admin edit';
+                toggleAdminPanel(adminAuthorized);
+            }
+
+            function handleAdminLogin(event) {
+                event.preventDefault();
+                const enteredEmail = normalizeEmail(adminEmailInput.value);
+
+                if (enteredEmail !== normalizeEmail(ADMIN_EMAIL)) {
+                    adminStatus.textContent = 'Access denied. This portal is only available for zimaris.martinez@gmail.com.';
+                    adminStatus.classList.add('error');
+                    adminStatus.classList.remove('success');
+                    return;
+                }
+
+                localStorage.setItem(adminFlagKey, 'true');
+                localStorage.setItem(adminEmailKey, ADMIN_EMAIL);
+                adminStatus.textContent = 'Access granted.';
+                adminStatus.classList.remove('error');
+                adminStatus.classList.add('success');
+                adminAuthorized = true;
+                updateAdminStatus();
+
+                setTimeout(() => {
+                    closeModal(adminModal);
+                    adminForm.reset();
+                    adminStatus.textContent = '';
+                    adminStatus.classList.remove('error', 'success');
+                }, 500);
+            }
+
+            function addNewPost(event) {
+                event.preventDefault();
+
+                if (!adminAuthorized) {
+                    openModal(adminModal);
+                    adminStatus.textContent = 'Please sign in with the admin email to publish updates.';
+                    adminStatus.classList.add('error');
+                    return;
+                }
+
+                const title = postTitle.value.trim() || 'Announcement';
+                const text = postText.value.trim();
+
+                if (!text && !selectedMediaData) {
+                    adminStatus.textContent = 'Please add text or an image before publishing.';
+                    adminStatus.classList.add('error');
+                    return;
+                }
+
+                const item = {
+                    id: Date.now(),
+                    title,
+                    text,
+                    media: selectedMediaData || ''
+                };
+
+                boardEntries.unshift(item);
+                saveBoardEntries();
+                renderBoard();
+
+                postForm.reset();
+                selectedMediaData = '';
+                buildBoardPreview();
+                adminStatus.textContent = 'Announcement published.';
+                adminStatus.classList.remove('error');
+                adminStatus.classList.add('success');
+                setTimeout(() => {
+                    adminStatus.textContent = '';
+                    adminStatus.classList.remove('success');
+                }, 1200);
+            }
+
+            function deletePost(postId) {
+                boardEntries = boardEntries.filter((post) => post.id !== postId);
+                saveBoardEntries();
+                renderBoard();
+            }
+
+            function editPost(postId) {
+                const post = boardEntries.find((entry) => entry.id === postId);
+                if (!post) return;
+
+                postTitle.value = post.title || '';
+                postText.value = post.text || '';
+                selectedMediaData = post.media || '';
+                buildBoardPreview();
+                toggleAdminPanel(true);
+                postTitle.focus();
+
+                if (post.media) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+
+            function handleMediaUpload(event) {
+                const file = event.target.files && event.target.files[0];
+                if (!file) {
+                    selectedMediaData = '';
+                    buildBoardPreview();
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    adminStatus.textContent = 'Only image or GIF files are supported.';
+                    adminStatus.classList.add('error');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function () {
+                    selectedMediaData = reader.result;
+                    buildBoardPreview();
+                    adminStatus.textContent = '';
+                    adminStatus.classList.remove('error');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function setupMapZoom() {
+                let zoomLevel = 1;
+                const minZoom = 0.75;
+                const maxZoom = 2.5;
+                const step = 0.25;
+
+                function applyZoom() {
+                    const mapImage = document.querySelector('.map-image');
+                    if (!mapImage) return;
+                    mapImage.style.transform = `scale(${zoomLevel})`;
+                }
+
+                zoomInBtn.addEventListener('click', () => {
+                    zoomLevel = Math.min(zoomLevel + step, maxZoom);
+                    applyZoom();
                 });
-                createAccountForm.classList.toggle('hidden', !isCreate);
-                loginForm.classList.toggle('hidden', isCreate);
+
+                zoomOutBtn.addEventListener('click', () => {
+                    zoomLevel = Math.max(zoomLevel - step, minZoom);
+                    applyZoom();
+                });
+
+                zoomResetBtn.addEventListener('click', () => {
+                    zoomLevel = 1;
+                    applyZoom();
+                });
             }
 
-            function openCreateAccount() {
-                setAuthTab('create');
-                openModal(authModal);
-            }
-
-            function openLogin() {
-                setAuthTab('login');
-                openModal(authModal);
-            }
-
-            function updateClearButton() {
-                clearAllBtn.disabled = entries.length === 0;
-            }
-
-            function render() {
-                document.querySelectorAll('.marker').forEach((marker) => marker.remove());
-                entriesContainer.innerHTML = '';
-
-                if (entries.length === 0) {
-                    entriesContainer.innerHTML = '<div class="empty-state">No hay avistamientos registrados. Haz clic en el mapa de Gondwa.</div>';
-                } else {
-                    entries.forEach((entry, index) => {
-                        const marker = document.createElement('div');
-                        marker.className = 'marker';
-                        marker.style.left = `${entry.x}%`;
-                        marker.style.top = `${entry.y}%`;
-                        marker.style.backgroundColor = entry.color;
-                        marker.title = `${entry.dino}${entry.notes ? `: ${entry.notes}` : ''}`;
-                        mapLayer.appendChild(marker);
-
-                        const card = document.createElement('div');
-                        card.className = 'entry-card';
-                        card.style.borderLeftColor = entry.color;
-                        card.innerHTML = `
-                            <div class="entry-info">
-                                <h4>${entry.dino}</h4>
-                                <p>X: ${entry.x.toFixed(1)}% | Y: ${entry.y.toFixed(1)}%</p>
-                                ${entry.notes ? `<p><em>"${entry.notes}"</em></p>` : ''}
-                            </div>
-                            <button class="delete-btn" data-index="${index}" title="Borrar">&times;</button>
-                        `;
-                        entriesContainer.appendChild(card);
-                    });
-                }
-
-                countSpan.textContent = String(entries.length);
-                updateClearButton();
-                saveEntries();
-            }
-
-            function addMarkerAtPointer(clientX, clientY) {
-                const rect = mapImg.getBoundingClientRect();
-                const localX = (clientX - rect.left) / rect.width;
-                const localY = (clientY - rect.top) / rect.height;
-                const clampedX = clamp(localX * 100, 0, 100);
-                const clampedY = clamp(localY * 100, 0, 100);
-
-                const selectedOption = dinoSelect.options[dinoSelect.selectedIndex];
-                const color = selectedOption?.dataset.color || '#6366f1';
-                const newEntry = {
-                    x: clampedX,
-                    y: clampedY,
-                    dino: dinoSelect.value,
-                    notes: notesInput.value.trim(),
-                    color
-                };
-
-                entries.push(newEntry);
-                render();
-                notesInput.value = '';
-                setStatus('Marcador guardado');
-            }
-
-            function removeEntry(index) {
-                entries.splice(index, 1);
-                render();
-                setStatus('Marcador eliminado');
-            }
-
-            function updateMapTransform() {
-                mapLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
-            }
-
-            function resetMapView() {
-                zoomLevel = 1;
-                panX = 0;
-                panY = 0;
-                updateMapTransform();
-            }
-
-            function zoomMap(direction) {
-                const nextZoom = clamp(zoomLevel + (direction * zoomStep), minZoom, maxZoom);
-                if (nextZoom === zoomLevel) return;
-                zoomLevel = nextZoom;
-                updateMapTransform();
-            }
-
-            function handleMapPointerDown(event) {
-                if (event.target.closest('.marker')) {
+            adminAccessBtn.addEventListener('click', () => openModal(adminModal));
+            openBoardAdminBtn.addEventListener('click', () => {
+                if (!adminAuthorized) {
+                    openModal(adminModal);
                     return;
                 }
+                toggleAdminPanel(true);
+                postTitle.focus();
+            });
+            adminForm.addEventListener('submit', handleAdminLogin);
+            postForm.addEventListener('submit', addNewPost);
+            postMedia.addEventListener('change', handleMediaUpload);
 
-                isDraggingMap = true;
-                dragStartX = event.clientX;
-                dragStartY = event.clientY;
-                dragStartPanX = panX;
-                dragStartPanY = panY;
-                mapMovedDuringGesture = false;
-                mapViewport.classList.add('dragging');
-            }
-
-            function handleMapPointerMove(event) {
-                if (!isDraggingMap) return;
-
-                const deltaX = event.clientX - dragStartX;
-                const deltaY = event.clientY - dragStartY;
-                panX = dragStartPanX + deltaX;
-                panY = dragStartPanY + deltaY;
-                mapMovedDuringGesture = true;
-                updateMapTransform();
-            }
-
-            function handleMapPointerUp(event) {
-                if (!isDraggingMap) return;
-                isDraggingMap = false;
-                mapViewport.classList.remove('dragging');
-
-                if (!mapMovedDuringGesture && event.target === mapImg || event.target === mapViewport || event.target === mapLayer) {
-                    addMarkerAtPointer(event.clientX, event.clientY);
-                }
-            }
-
-            mapViewport.addEventListener('pointerdown', handleMapPointerDown);
-            mapViewport.addEventListener('pointermove', handleMapPointerMove);
-            window.addEventListener('pointerup', handleMapPointerUp);
-            mapViewport.addEventListener('pointerleave', () => {
-                isDraggingMap = false;
-                mapViewport.classList.remove('dragging');
+            saveMarkerBtn.addEventListener('click', () => {
+                const rect = mapLayer.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                saveMapMarkerFromClick(centerX, centerY);
             });
 
-            zoomInBtn.addEventListener('click', () => zoomMap(1));
-            zoomOutBtn.addEventListener('click', () => zoomMap(-1));
-            zoomResetBtn.addEventListener('click', resetMapView);
+            mapLayer.addEventListener('click', (event) => saveMapMarkerFromClick(event.clientX, event.clientY));
 
-            document.addEventListener('click', (event) => {
-                const deleteButton = event.target.closest('.delete-btn');
-                if (deleteButton) {
-                    const index = Number(deleteButton.dataset.index);
-                    if (!Number.isNaN(index)) {
-                        removeEntry(index);
+            document.querySelectorAll('.modal').forEach((modal) => {
+                modal.addEventListener('click', (event) => {
+                    if (event.target === modal) {
+                        closeModal(modal);
                     }
-                }
-
-                const authTab = event.target.closest('.auth-tab');
-                if (authTab) {
-                    setAuthTab(authTab.dataset.authTab);
-                }
-
-                if (event.target.closest('[data-close="clear"]')) {
-                    closeModal(clearModal);
-                }
-
-                if (event.target.closest('[data-close="auth"]')) {
-                    closeModal(authModal);
-                }
+                });
             });
 
-            clearAllBtn.addEventListener('click', () => {
-                if (entries.length === 0) return;
-                openModal(clearModal);
-            });
-
-            confirmDeleteBtn.addEventListener('click', () => {
-                entries = [];
-                render();
-                closeModal(clearModal);
-                setStatus('Todos los marcadores fueron eliminados');
-            });
-
-            createAccountBtn.addEventListener('click', openCreateAccount);
-            accountBtn.addEventListener('click', () => {
-                const user = getCurrentUser();
-                if (user && user.email) {
-                    clearCurrentUser();
-                    updateAccountButton();
-                    refreshEntriesFromCurrentUser();
-                    setStatus('Sesión cerrada');
-                    return;
-                }
-                openLogin();
-            });
-
-            continueGuestBtn.addEventListener('click', () => {
-                clearCurrentUser();
-                updateAccountButton();
-                refreshEntriesFromCurrentUser();
-                closeModal(authModal);
-                setStatus('Continuas como invitado');
-            });
-
-            createAccountForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const name = document.getElementById('authName').value.trim();
-                const email = normalizeEmail(document.getElementById('createEmail').value);
-                const password = document.getElementById('createPassword').value;
-
-                if (!name || !email || !password) {
-                    setStatus('Completa todos los campos para crear la cuenta', true);
-                    return;
-                }
-
-                const users = getUsers();
-                users[email] = {
-                    name,
-                    email,
-                    password,
-                    entries: []
-                };
-                saveUsers(users);
-                setCurrentUser({ name, email, password });
-                updateAccountButton();
-                refreshEntriesFromCurrentUser();
-                createAccountForm.reset();
-                closeModal(authModal);
-                setStatus('Cuenta creada');
-            });
-
-            loginForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const email = normalizeEmail(document.getElementById('loginEmail').value);
-                const password = document.getElementById('loginPassword').value;
-                const users = getUsers();
-                const user = users[email];
-
-                if (!user || user.password !== password) {
-                    setStatus('Credenciales incorrectas', true);
-                    return;
-                }
-
-                setCurrentUser({ name: user.name || 'Explorer', email, password });
-                updateAccountButton();
-                refreshEntriesFromCurrentUser();
-                loginForm.reset();
-                closeModal(authModal);
-                setStatus('Inicio de sesión correcto');
-            });
-
-            saveMapBtn.addEventListener('click', () => {
-                const storageKey = getActiveStorageKey();
-                localStorage.setItem(storageKey, JSON.stringify(entries));
-                setStatus('Mapa guardado');
-            });
-
-            refreshEntriesFromCurrentUser();
-            updateAccountButton();
-            updateMapTransform();
-        });
+            renderMapMarkers();
+            renderEntries();
+            renderBoard();
+            updateAdminStatus();
+            setupMapZoom();
+        })();
     </script>
 </body>
 </html>
