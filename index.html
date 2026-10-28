@@ -324,31 +324,41 @@
             line-height: 1.5;
         }
 
-        .social-btn {
+        .auth-form {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .auth-submit {
             width: 100%;
             padding: 0.9rem 1rem;
             border-radius: 10px;
-            border: 1px solid var(--panel-border);
+            border: 1px solid var(--accent-color);
+            background: var(--accent-color);
+            color: white;
             font-weight: 700;
             cursor: pointer;
-            margin-top: 0.75rem;
-            transition: transform 0.15s ease, border-color 0.15s ease;
-            color: white;
-            background-color: rgba(255,255,255,0.03);
+            margin-top: 0.2rem;
+            transition: transform 0.15s ease, background 0.15s ease;
         }
 
-        .social-btn:hover {
+        .auth-submit:hover {
+            background: var(--accent-hover);
             transform: translateY(-1px);
-            border-color: var(--accent-color);
         }
 
-        .social-btn.facebook { background: #1877f2; }
-        .social-btn.apple { background: #111827; }
-        .social-btn.google { background: #ffffff; color: #1f2937; }
+        .guest-link {
+            width: 100%;
+            margin-top: 0.9rem;
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
 
         .modal-actions {
             display: flex;
@@ -387,7 +397,7 @@
             <h1>Path of Titans — Registro de Gondwa</h1>
             <p>Haz clic en cualquier ubicación del mapa para registrar el avistamiento de tu dinosaurio.</p>
         </div>
-        <button id="accountBtn" class="login-btn" type="button">Log in</button>
+        <button id="accountBtn" class="login-btn" type="button">Iniciar sesión</button>
     </header>
 
     <div class="main-container">
@@ -481,12 +491,29 @@
         <div class="modal-backdrop" data-close="auth"></div>
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
             <button type="button" class="modal-close" data-close="auth" aria-label="Cerrar">×</button>
-            <h3 id="authTitle">Inicia sesión para guardar tus entradas</h3>
-            <p>Usa una cuenta de Google, Apple o Facebook para guardar tus marcadores.</p>
+            <h3 id="authTitle">Guarda tus entradas</h3>
+            <p>Usa una cuenta local con correo y contraseña para guardar tus marcadores en este dispositivo.</p>
 
-            <button type="button" class="social-btn google" data-provider="Google">Continue with Google</button>
-            <button type="button" class="social-btn apple" data-provider="Apple">Continue with Apple</button>
-            <button type="button" class="social-btn facebook" data-provider="Facebook">Continue with Facebook</button>
+            <form id="authForm" class="auth-form">
+                <div class="form-group">
+                    <label for="authName">Nombre</label>
+                    <input id="authName" type="text" placeholder="Tu nombre de explorador" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="authEmail">Correo electrónico</label>
+                    <input id="authEmail" type="email" placeholder="correo@ejemplo.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="authPassword">Contraseña</label>
+                    <input id="authPassword" type="password" placeholder="Crea una contraseña" required>
+                </div>
+
+                <button type="submit" class="auth-submit">Guardar mis entradas</button>
+            </form>
+
+            <button type="button" class="guest-link" id="continueGuestBtn">Continuar como invitado</button>
         </div>
     </div>
 
@@ -503,9 +530,22 @@
             const clearModal = document.getElementById('clearModal');
             const authModal = document.getElementById('authModal');
             const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const authForm = document.getElementById('authForm');
+            const authNameInput = document.getElementById('authName');
+            const authEmailInput = document.getElementById('authEmail');
+            const authPasswordInput = document.getElementById('authPassword');
+            const continueGuestBtn = document.getElementById('continueGuestBtn');
 
             const defaultMapImage = 'https://i.ibb.co/3p3J862/gondwa-map.jpg';
             const guestKey = 'gondwa_pot_dino_entries_guest';
+
+            function slugify(value) {
+                return String(value || '')
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '_')
+                    .replace(/^_+|_+$/g, '') || 'user';
+            }
 
             function getCurrentUser() {
                 try {
@@ -517,8 +557,8 @@
 
             function getStorageKey() {
                 const user = getCurrentUser();
-                if (!user) return guestKey;
-                return `gondwa_pot_dino_entries_${user.provider.toLowerCase()}`;
+                if (!user || !user.email) return guestKey;
+                return `gondwa_pot_dino_entries_${slugify(user.email)}`;
             }
 
             function loadEntries() {
@@ -533,11 +573,11 @@
             function updateAccountButton() {
                 const user = getCurrentUser();
                 if (!user) {
-                    accountBtn.textContent = 'Log in';
+                    accountBtn.textContent = 'Iniciar sesión';
                     return;
                 }
 
-                accountBtn.textContent = `${user.provider} account`;
+                accountBtn.textContent = 'Cerrar sesión';
             }
 
             function openModal(modal) {
@@ -661,23 +701,41 @@
 
             accountBtn.addEventListener('click', toggleAuth);
 
-            document.querySelectorAll('.social-btn').forEach((button) => {
-                button.addEventListener('click', () => {
-                    const provider = button.dataset.provider;
-                    const user = {
-                        provider,
-                        label: `${provider} User`,
-                        id: `${provider.toLowerCase()}-${Date.now()}`
-                    };
+            continueGuestBtn.addEventListener('click', () => {
+                localStorage.removeItem('gondwa_current_user');
+                entries = JSON.parse(localStorage.getItem(guestKey)) || [];
+                updateAccountButton();
+                closeModal(authModal);
+                render();
+            });
 
-                    localStorage.setItem('gondwa_current_user', JSON.stringify(user));
-                    updateAccountButton();
-                    closeModal(authModal);
+            authForm.addEventListener('submit', (event) => {
+                event.preventDefault();
 
-                    const existingEntries = JSON.parse(localStorage.getItem(getStorageKey())) || [];
-                    entries = existingEntries;
-                    render();
-                });
+                const name = authNameInput.value.trim();
+                const email = authEmailInput.value.trim().toLowerCase();
+                const password = authPasswordInput.value.trim();
+
+                if (!name || !email || !password) {
+                    alert('Completa nombre, correo y contraseña para guardar tus entradas.');
+                    return;
+                }
+
+                const user = {
+                    provider: 'Local account',
+                    name,
+                    email,
+                    password
+                };
+
+                localStorage.setItem('gondwa_current_user', JSON.stringify(user));
+                authForm.reset();
+                updateAccountButton();
+                closeModal(authModal);
+
+                const existingEntries = JSON.parse(localStorage.getItem(getStorageKey())) || [];
+                entries = existingEntries;
+                render();
             });
 
             updateAccountButton();
