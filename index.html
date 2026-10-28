@@ -108,6 +108,16 @@
       align-items: center;
     }
 
+    .header-status {
+      color: var(--success);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: none;
+      min-height: 1rem;
+      white-space: nowrap;
+    }
+
     .btn,
     .btn-ghost,
     .btn-danger {
@@ -582,6 +592,8 @@
         <a class="btn-ghost" href="#board">Board</a>
         <button id="createAccountBtn" class="btn-ghost" type="button">Create account</button>
         <button id="loginAccountBtn" class="btn-ghost" type="button">Log in</button>
+        <button id="logoutBtn" class="btn-ghost" type="button" style="display:none;">Log out</button>
+        <div id="headerAccountStatus" class="header-status" aria-live="polite"></div>
         <a class="btn-ghost" href="https://discord.gg/BCmyrTVfe" target="_blank" rel="noopener noreferrer">Discord</a>
       </div>
     </div>
@@ -716,6 +728,8 @@
       const accountStatus = document.getElementById('accountStatus');
       const createAccountBtn = document.getElementById('createAccountBtn');
       const loginAccountBtn = document.getElementById('loginAccountBtn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const headerAccountStatus = document.getElementById('headerAccountStatus');
       const loginForm = document.getElementById('loginForm');
       const createAccountForm = document.getElementById('createAccountForm');
       const accountModeButtons = document.querySelectorAll('.account-mode-btn');
@@ -760,14 +774,28 @@
         updateAccountButtons();
       }
 
+      function clearActiveAccount() {
+        localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
+        updateAccountButtons();
+      }
+
       function getAccountStorageKey(accountId) {
         return `pot_dino_map_entries_${accountId}`;
       }
 
       function updateAccountButtons() {
         const activeAccount = getActiveAccount();
-        loginAccountBtn.textContent = activeAccount ? `My account: ${activeAccount.username}` : 'Log in';
-        createAccountBtn.textContent = activeAccount ? 'Switch account' : 'Create account';
+        const hasAccount = Boolean(activeAccount);
+
+        loginAccountBtn.textContent = hasAccount ? `My account: ${activeAccount.username}` : 'Log in';
+        createAccountBtn.textContent = hasAccount ? 'Switch account' : 'Create account';
+        logoutBtn.style.display = hasAccount ? 'inline-flex' : 'none';
+
+        if (hasAccount) {
+          headerAccountStatus.textContent = `Logged in as ${activeAccount.username}`;
+        } else {
+          headerAccountStatus.textContent = '';
+        }
       }
 
       function loadMapEntries() {
@@ -920,6 +948,19 @@
       }
 
       function saveMapMarkerFromClick(clientX, clientY) {
+        const activeAccount = getActiveAccount();
+        if (!activeAccount) {
+          setAccountStatus('Please create an account or log in before saving entries.', 'error');
+          showAccountMode('login');
+          openModal(accountModal);
+          return;
+        }
+
+        const saveConfirmed = window.confirm('Save this entry to your account?');
+        if (!saveConfirmed) {
+          return;
+        }
+
         const rect = mapLayer.getBoundingClientRect();
         const xPercent = ((clientX - rect.left) / rect.width) * 100;
         const yPercent = ((clientY - rect.top) / rect.height) * 100;
@@ -1009,6 +1050,7 @@
         accounts.push(newAccount);
         localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
         setActiveAccount(newAccount);
+        updateAccountButtons();
         mapEntries = loadMapEntries();
         renderMapMarkers();
         renderEntriesList();
@@ -1041,6 +1083,7 @@
         }
 
         setActiveAccount(matchedAccount);
+        updateAccountButtons();
         mapEntries = loadMapEntries();
         renderMapMarkers();
         renderEntriesList();
@@ -1053,6 +1096,13 @@
         }, 700);
       }
 
+      function handleLogout() {
+        clearActiveAccount();
+        mapEntries = loadMapEntries();
+        renderMapMarkers();
+        renderEntriesList();
+      }
+
       createAccountBtn.addEventListener('click', () => {
         showAccountMode('create');
         openModal(accountModal);
@@ -1061,6 +1111,10 @@
       loginAccountBtn.addEventListener('click', () => {
         showAccountMode('login');
         openModal(accountModal);
+      });
+
+      logoutBtn.addEventListener('click', () => {
+        handleLogout();
       });
 
       accountModeButtons.forEach((button) => {
