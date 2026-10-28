@@ -129,8 +129,8 @@
         .map-wrapper {
             position: relative;
             width: min(82vmin, 960px);
-            max-width: 100%;
-            aspect-ratio: 1 / 1;
+            max-width: calc(100vw - 2rem);
+            aspect-ratio: var(--map-aspect, 1 / 1);
             margin: 0 auto;
             background-color: #08111e;
             border-radius: 12px;
@@ -157,13 +157,13 @@
         .gondwa-map-img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
             display: block;
             transform-origin: center center;
             transition: transform 0.12s ease-out;
             will-change: transform;
             user-select: none;
             pointer-events: none;
+            object-fit: fill;
         }
 
         .map-zoom-controls {
@@ -806,14 +806,30 @@
                 openLogin();
             }
 
+            function syncMapAspect() {
+                const naturalWidth = mapImg.naturalWidth || 1;
+                const naturalHeight = mapImg.naturalHeight || 1;
+                const aspect = naturalWidth / naturalHeight;
+                mapContainer.style.setProperty('--map-aspect', `${aspect}`);
+            }
+
             function applyZoomTransform() {
+                const imageWidth = mapImg.naturalWidth || mapViewport.clientWidth;
+                const imageHeight = mapImg.naturalHeight || mapViewport.clientHeight;
+                const zoomedImageWidth = imageWidth * zoomLevel;
+                const zoomedImageHeight = imageHeight * zoomLevel;
+
+                const visibleWidth = mapViewport.clientWidth;
+                const visibleHeight = mapViewport.clientHeight;
+                const maxPanX = Math.max(0, (zoomedImageWidth - visibleWidth) / 2);
+                const maxPanY = Math.max(0, (zoomedImageHeight - visibleHeight) / 2);
+
                 if (zoomLevel <= 1) {
                     panX = 0;
                     panY = 0;
                 } else {
-                    const maxPan = (mapViewport.clientWidth * (zoomLevel - 1)) / 2;
-                    panX = clamp(panX, -maxPan, maxPan);
-                    panY = clamp(panY, -maxPan, maxPan);
+                    panX = clamp(panX, -maxPanX, maxPanX);
+                    panY = clamp(panY, -maxPanY, maxPanY);
                 }
 
                 mapImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
@@ -947,7 +963,7 @@
                 applyZoomTransform();
             });
 
-            function endMapDrag() {
+            function endMapDrag(event) {
                 if (!isDraggingMap) return;
                 isDraggingMap = false;
                 mapViewport.classList.remove('dragging');
@@ -1001,6 +1017,42 @@
                 tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
             });
 
+            createAccountForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const name = document.getElementById('authName').value.trim();
+                const email = document.getElementById('createEmail').value.trim();
+                const password = document.getElementById('createPassword').value.trim();
+
+                if (!name || !email || !password) return;
+
+                const users = getUsers();
+                users[email] = { name, email, password };
+                saveUsers(users);
+                setCurrentUser({ name, email, password });
+                updateAccountButton();
+                closeModal(authModal);
+                createAccountForm.reset();
+            });
+
+            loginForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const email = document.getElementById('loginEmail').value.trim();
+                const password = document.getElementById('loginPassword').value.trim();
+                const users = getUsers();
+
+                if (!users[email] || users[email].password !== password) {
+                    alert('Credenciales incorrectas');
+                    return;
+                }
+
+                setCurrentUser(users[email]);
+                updateAccountButton();
+                closeModal(authModal);
+                loginForm.reset();
+                entries = loadEntries();
+                render();
+            });
+
             continueGuestBtn.addEventListener('click', () => {
                 clearCurrentUser();
                 entries = JSON.parse(localStorage.getItem(guestKey)) || [];
@@ -1009,91 +1061,23 @@
                 render();
             });
 
-            createAccountForm.addEventListener('submit', (event) => {
-                event.preventDefault();
+            zoomInBtn.addEventListener('click', zoomIn);
+            zoomOutBtn.addEventListener('click', zoomOut);
+            zoomResetBtn.addEventListener('click', resetZoom);
 
-                const name = document.getElementById('authName').value.trim();
-                const email = document.getElementById('createEmail').value.trim().toLowerCase();
-                const password = document.getElementById('createPassword').value.trim();
-
-                if (!name || !email || !password) {
-                    alert('Completa nombre, correo y contraseña para crear la cuenta.');
-                    return;
-                }
-
-                const users = getUsers();
-                if (users[email]) {
-                    alert('Ya existe una cuenta con ese correo electrónico.');
-                    return;
-                }
-
-                users[email] = {
-                    name,
-                    email,
-                    password
-                };
-                saveUsers(users);
-
-                setCurrentUser({ name, email, password });
-                createAccountForm.reset();
-                closeModal(authModal);
-                updateAccountButton();
-
-                const existingEntries = JSON.parse(localStorage.getItem(getStorageKey())) || [];
-                entries = existingEntries;
-                render();
+            mapImg.addEventListener('load', () => {
+                syncMapAspect();
+                applyZoomTransform();
             });
 
-            loginForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-
-                const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-                const password = document.getElementById('loginPassword').value.trim();
-
-                if (!email || !password) {
-                    alert('Introduce tu correo y contraseña.');
-                    return;
-                }
-
-                const users = getUsers();
-                const user = users[email];
-
-                if (!user || user.password !== password) {
-                    alert('Correo o contraseña incorrectos.');
-                    return;
-                }
-
-                setCurrentUser({ name: user.name, email: user.email, password: user.password });
-                loginForm.reset();
-                closeModal(authModal);
-                updateAccountButton();
-
-                const existingEntries = JSON.parse(localStorage.getItem(getStorageKey())) || [];
-                entries = existingEntries;
-                render();
+            window.addEventListener('resize', () => {
+                applyZoomTransform();
             });
 
-            const stopMapClick = (event) => {
-                event.stopPropagation();
-                event.preventDefault();
-            };
-
-            zoomInBtn.addEventListener('click', (event) => {
-                stopMapClick(event);
-                zoomIn();
-            });
-            zoomOutBtn.addEventListener('click', (event) => {
-                stopMapClick(event);
-                zoomOut();
-            });
-            zoomResetBtn.addEventListener('click', (event) => {
-                stopMapClick(event);
-                resetZoom();
-            });
-
-            applyZoomTransform();
             updateAccountButton();
             render();
+            syncMapAspect();
+            applyZoomTransform();
         });
     </script>
 </body>
