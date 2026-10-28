@@ -15,6 +15,7 @@
             --text-muted: #9ca3af;
             --danger-color: #ef4444;
             --danger-dark: #b91c1c;
+            --success-color: #22c55e;
             --modal-bg: rgba(4, 8, 15, 0.78);
             --shadow: rgba(0, 0, 0, 0.45);
             --discord-color: #5865F2;
@@ -97,7 +98,9 @@
 
         .discord-btn,
         .secondary-btn,
-        .login-btn {
+        .login-btn,
+        .btn-primary,
+        .btn-danger {
             border-radius: 999px;
             padding: 0.65rem 1rem;
             font-weight: 700;
@@ -115,13 +118,20 @@
             color: white;
         }
 
+        .secondary-btn,
+        .btn-primary,
+        .btn-danger {
+            border-radius: 10px;
+        }
+
         .secondary-btn {
             background: transparent;
             border: 1px solid var(--panel-border);
             color: var(--text-color);
         }
 
-        .login-btn {
+        .login-btn,
+        .btn-primary {
             background-color: var(--accent-color);
             border: 1px solid var(--accent-color);
             color: white;
@@ -129,7 +139,9 @@
 
         .discord-btn:hover,
         .secondary-btn:hover,
-        .login-btn:hover {
+        .login-btn:hover,
+        .btn-primary:hover,
+        .btn-danger:hover {
             transform: translateY(-1px);
         }
 
@@ -372,7 +384,6 @@
             color: var(--danger-color);
             border: 1px solid var(--danger-color);
             padding: 0.6rem;
-            border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -386,6 +397,31 @@
         .btn-danger:disabled {
             opacity: 0.4;
             cursor: not-allowed;
+        }
+
+        .save-status {
+            min-height: 1.2rem;
+            font-size: 0.75rem;
+            color: var(--success-color);
+        }
+
+        .user-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: fit-content;
+            padding: 0.45rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            color: #dfe6ff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        .hidden {
+            display: none !important;
         }
 
         .empty-state {
@@ -540,10 +576,6 @@
             color: white;
         }
 
-        .hidden {
-            display: none !important;
-        }
-
         @media (max-width: 640px) {
             header {
                 justify-content: center;
@@ -656,6 +688,8 @@
                 <input type="text" id="notesInput" placeholder="Ej. Adulto, Cerca de Impact Crater...">
             </div>
 
+            <div class="user-pill" id="userPill">Guest mode</div>
+
             <hr style="border-color: var(--panel-border);">
 
             <div class="form-group" style="flex: 1;">
@@ -663,6 +697,8 @@
                 <div class="entries-list" id="entries"></div>
             </div>
 
+            <button class="btn-primary" id="saveMapBtn" type="button">Save map</button>
+            <div class="save-status" id="saveStatus" aria-live="polite"></div>
             <button class="btn-danger" id="clearAllBtn" type="button">Borrar todos los marcadores</button>
         </div>
     </div>
@@ -742,6 +778,9 @@
             const clearAllBtn = document.getElementById('clearAllBtn');
             const createAccountBtn = document.getElementById('createAccountBtn');
             const accountBtn = document.getElementById('accountBtn');
+            const saveMapBtn = document.getElementById('saveMapBtn');
+            const saveStatus = document.getElementById('saveStatus');
+            const userPill = document.getElementById('userPill');
             const clearModal = document.getElementById('clearModal');
             const authModal = document.getElementById('authModal');
             const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
@@ -768,44 +807,14 @@
             let dragStartPanY = 0;
             let isDraggingMap = false;
             let mapMovedDuringGesture = false;
-            let activePointers = new Map();
-            let pinchStartDistance = null;
-            let pinchStartZoom = 1;
+            let entries = [];
 
             function clamp(value, min, max) {
                 return Math.min(Math.max(value, min), max);
             }
 
-            function fitMapToViewport() {
-                const naturalWidth = mapImg.naturalWidth || 1;
-                const naturalHeight = mapImg.naturalHeight || 1;
-                const maxWidth = Math.min(window.innerWidth - 80, 1100);
-                const maxHeight = Math.min(window.innerHeight - 260, 850);
-                const fitScale = Math.min(0.92, maxWidth / naturalWidth, maxHeight / naturalHeight);
-                const displayWidth = Math.max(240, naturalWidth * fitScale);
-                const displayHeight = Math.max(240, naturalHeight * fitScale);
-
-                mapContainer.style.width = `${displayWidth}px`;
-                mapContainer.style.height = `${displayHeight}px`;
-                mapViewport.style.width = `${displayWidth}px`;
-                mapViewport.style.height = `${displayHeight}px`;
-
-                zoomLevel = Number(fitScale.toFixed(3));
-                panX = 0;
-                panY = 0;
-                applyZoomTransform();
-            }
-
-            function getUsers() {
-                try {
-                    return JSON.parse(localStorage.getItem(usersKey)) || {};
-                } catch (error) {
-                    return {};
-                }
-            }
-
-            function saveUsers(users) {
-                localStorage.setItem(usersKey, JSON.stringify(users));
+            function normalizeEmail(value) {
+                return String(value || '').trim().toLowerCase();
             }
 
             function slugify(value) {
@@ -832,30 +841,88 @@
                 localStorage.removeItem(currentUserKey);
             }
 
-            function getStorageKey() {
-                const user = getCurrentUser();
-                if (!user || !user.email) return guestKey;
-                return `gondwa_pot_dino_entries_${slugify(user.email)}`;
+            function getUsers() {
+                try {
+                    return JSON.parse(localStorage.getItem(usersKey)) || {};
+                } catch (error) {
+                    return {};
+                }
             }
 
-            let entries = [];
-            try {
-                entries = JSON.parse(localStorage.getItem(getStorageKey())) || [];
-            } catch (error) {
-                entries = [];
+            function saveUsers(users) {
+                localStorage.setItem(usersKey, JSON.stringify(users));
+            }
+
+            function userStorageKey(email) {
+                const trimmed = normalizeEmail(email);
+                return `gondwa_pot_dino_entries_${slugify(trimmed)}`;
+            }
+
+            function loadEntriesFromStorage(storageKey) {
+                try {
+                    return JSON.parse(localStorage.getItem(storageKey)) || [];
+                } catch (error) {
+                    return [];
+                }
+            }
+
+            function getActiveStorageKey() {
+                const user = getCurrentUser();
+                if (!user || !user.email) return guestKey;
+                return userStorageKey(user.email);
+            }
+
+            function updateUserPill() {
+                const user = getCurrentUser();
+                if (!user || !user.email) {
+                    userPill.textContent = 'Guest mode';
+                    userPill.classList.remove('hidden');
+                    return;
+                }
+
+                userPill.textContent = `Signed in as ${user.name || 'Explorer'}`;
+                userPill.classList.remove('hidden');
+            }
+
+            function setStatus(message, isError = false) {
+                saveStatus.textContent = message;
+                saveStatus.style.color = isError ? '#fca5a5' : '#a7f3d0';
+            }
+
+            function refreshEntriesFromCurrentUser() {
+                const user = getCurrentUser();
+                if (user && user.email) {
+                    entries = loadEntriesFromStorage(userStorageKey(user.email));
+                } else {
+                    entries = loadEntriesFromStorage(guestKey);
+                }
+                render();
             }
 
             function saveEntries() {
-                localStorage.setItem(getStorageKey(), JSON.stringify(entries));
+                const storageKey = getActiveStorageKey();
+                localStorage.setItem(storageKey, JSON.stringify(entries));
+
+                const user = getCurrentUser();
+                if (user && user.email) {
+                    const users = getUsers();
+                    const emailKey = normalizeEmail(user.email);
+                    users[emailKey] = {
+                        ...users[emailKey],
+                        name: user.name || users[emailKey]?.name || 'Explorer',
+                        email: user.email,
+                        password: user.password || users[emailKey]?.password || '',
+                        entries: [...entries]
+                    };
+                    saveUsers(users);
+                }
             }
 
             function updateAccountButton() {
                 const user = getCurrentUser();
-                if (!user) {
-                    accountBtn.textContent = 'Log in';
-                    return;
-                }
-                accountBtn.textContent = 'Log out';
+                accountBtn.textContent = user ? 'Log out' : 'Log in';
+                createAccountBtn.textContent = user ? 'Account' : 'Create account';
+                updateUserPill();
             }
 
             function openModal(modal) {
@@ -886,55 +953,6 @@
             function openLogin() {
                 setAuthTab('login');
                 openModal(authModal);
-            }
-
-            function toggleAuth() {
-                const user = getCurrentUser();
-                if (user) {
-                    clearCurrentUser();
-                    updateAccountButton();
-                    return;
-                }
-                openLogin();
-            }
-
-            function applyZoomTransform() {
-                const imageWidth = mapImg.naturalWidth || mapViewport.clientWidth;
-                const imageHeight = mapImg.naturalHeight || mapViewport.clientHeight;
-                const zoomedImageWidth = imageWidth * zoomLevel;
-                const zoomedImageHeight = imageHeight * zoomLevel;
-                const visibleWidth = mapViewport.clientWidth;
-                const visibleHeight = mapViewport.clientHeight;
-                const maxPanX = Math.max(0, (zoomedImageWidth - visibleWidth) / 2);
-                const maxPanY = Math.max(0, (zoomedImageHeight - visibleHeight) / 2);
-
-                if (zoomLevel <= 1) {
-                    panX = 0;
-                    panY = 0;
-                } else {
-                    panX = clamp(panX, -maxPanX, maxPanX);
-                    panY = clamp(panY, -maxPanY, maxPanY);
-                }
-
-                mapLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
-            }
-
-            function zoomIn() {
-                if (zoomLevel < maxZoom) {
-                    zoomLevel = Number(Math.min(maxZoom, zoomLevel + zoomStep).toFixed(2));
-                    applyZoomTransform();
-                }
-            }
-
-            function zoomOut() {
-                if (zoomLevel > minZoom) {
-                    zoomLevel = Number(Math.max(minZoom, zoomLevel - zoomStep).toFixed(2));
-                    applyZoomTransform();
-                }
-            }
-
-            function resetZoom() {
-                fitMapToViewport();
             }
 
             function updateClearButton() {
@@ -995,149 +1013,251 @@
                 entries.push(newEntry);
                 notesInput.value = '';
                 render();
+                setStatus('Map updated. Click Save map to keep your entries.');
             }
 
-            mapContainer.addEventListener('click', (event) => {
-                if (mapMovedDuringGesture) {
-                    mapMovedDuringGesture = false;
-                    return;
+            function fitMapToViewport() {
+                const naturalWidth = mapImg.naturalWidth || 1;
+                const naturalHeight = mapImg.naturalHeight || 1;
+                const maxWidth = Math.min(window.innerWidth - 80, 1100);
+                const maxHeight = Math.min(window.innerHeight - 260, 850);
+                const fitScale = Math.min(0.92, maxWidth / naturalWidth, maxHeight / naturalHeight);
+                const displayWidth = Math.max(240, naturalWidth * fitScale);
+                const displayHeight = Math.max(240, naturalHeight * fitScale);
+
+                mapContainer.style.width = `${displayWidth}px`;
+                mapContainer.style.height = `${displayHeight}px`;
+                mapViewport.style.width = `${displayWidth}px`;
+                mapViewport.style.height = `${displayHeight}px`;
+
+                zoomLevel = Number(fitScale.toFixed(3));
+                panX = 0;
+                panY = 0;
+                applyZoomTransform();
+            }
+
+            function applyZoomTransform() {
+                const imageWidth = mapImg.naturalWidth || mapViewport.clientWidth;
+                const imageHeight = mapImg.naturalHeight || mapViewport.clientHeight;
+                const zoomedImageWidth = imageWidth * zoomLevel;
+                const zoomedImageHeight = imageHeight * zoomLevel;
+                const visibleWidth = mapViewport.clientWidth;
+                const visibleHeight = mapViewport.clientHeight;
+                const maxPanX = Math.max(0, (zoomedImageWidth - visibleWidth) / 2);
+                const maxPanY = Math.max(0, (zoomedImageHeight - visibleHeight) / 2);
+
+                if (zoomLevel <= 1) {
+                    panX = 0;
+                    panY = 0;
+                } else {
+                    panX = clamp(panX, -maxPanX, maxPanX);
+                    panY = clamp(panY, -maxPanY, maxPanY);
                 }
 
-                if (event.target.closest('.marker') || event.target.closest('.zoom-btn') || event.target.closest('.modal')) {
-                    return;
+                mapLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+            }
+
+            function zoomIn() {
+                if (zoomLevel < maxZoom) {
+                    zoomLevel = Number(Math.min(maxZoom, zoomLevel + zoomStep).toFixed(2));
+                    applyZoomTransform();
                 }
+            }
 
-                addMarkerAtPointer(event.clientX, event.clientY);
-            });
-
-            mapContainer.addEventListener('pointerdown', (event) => {
-                if (event.target.closest('.marker') || event.target.closest('.zoom-btn') || event.target.closest('button')) {
-                    return;
+            function zoomOut() {
+                if (zoomLevel > minZoom) {
+                    zoomLevel = Number(Math.max(minZoom, zoomLevel - zoomStep).toFixed(2));
+                    applyZoomTransform();
                 }
+            }
 
+            function resetZoom() {
+                fitMapToViewport();
+            }
+
+            function handleMapPointerDown(event) {
+                if (event.button !== 0) return;
                 isDraggingMap = true;
                 mapMovedDuringGesture = false;
-                mapViewport.classList.add('dragging');
                 dragStartX = event.clientX;
                 dragStartY = event.clientY;
                 dragStartPanX = panX;
                 dragStartPanY = panY;
+                mapViewport.classList.add('dragging');
                 mapViewport.setPointerCapture(event.pointerId);
-            });
+            }
 
-            mapViewport.addEventListener('pointermove', (event) => {
+            function handleMapPointerMove(event) {
                 if (!isDraggingMap) return;
-
                 const deltaX = event.clientX - dragStartX;
                 const deltaY = event.clientY - dragStartY;
+                if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+                    mapMovedDuringGesture = true;
+                }
                 panX = dragStartPanX + deltaX;
                 panY = dragStartPanY + deltaY;
-                mapMovedDuringGesture = true;
                 applyZoomTransform();
-            });
+            }
 
-            mapViewport.addEventListener('pointerup', () => {
+            function handleMapPointerUp(event) {
+                if (!isDraggingMap) return;
                 isDraggingMap = false;
                 mapViewport.classList.remove('dragging');
-            });
+                if (event && typeof event.pointerId === 'number') {
+                    mapViewport.releasePointerCapture(event.pointerId);
+                }
+            }
 
-            mapViewport.addEventListener('pointerleave', () => {
-                isDraggingMap = false;
-                mapViewport.classList.remove('dragging');
-            });
+            function handleCreateAccount(event) {
+                event.preventDefault();
+                const name = document.getElementById('authName').value.trim();
+                const email = normalizeEmail(document.getElementById('createEmail').value);
+                const password = document.getElementById('createPassword').value.trim();
 
-            zoomInBtn.addEventListener('click', zoomIn);
-            zoomOutBtn.addEventListener('click', zoomOut);
-            zoomResetBtn.addEventListener('click', resetZoom);
+                if (!name || !email || !password) {
+                    alert('Please complete all fields.');
+                    return;
+                }
 
-            window.addEventListener('resize', resetZoom);
+                const users = getUsers();
+                if (users[email]) {
+                    alert('An account already exists for that email.');
+                    return;
+                }
 
-            document.addEventListener('click', (event) => {
-                const deleteBtn = event.target.closest('.delete-btn');
-                if (!deleteBtn) return;
-
-                const index = Number(deleteBtn.dataset.index);
-                if (Number.isNaN(index)) return;
-                entries.splice(index, 1);
+                users[email] = { name, email, password, entries: loadEntriesFromStorage(userStorageKey(email)) };
+                saveUsers(users);
+                const user = { name, email, password };
+                setCurrentUser(user);
+                entries = loadEntriesFromStorage(userStorageKey(email));
+                updateAccountButton();
+                closeModal(authModal);
+                createAccountForm.reset();
                 render();
+                setStatus('Account created. Your map entries are now saved to your account.');
+            }
+
+            function handleLogin(event) {
+                event.preventDefault();
+                const email = normalizeEmail(document.getElementById('loginEmail').value);
+                const password = document.getElementById('loginPassword').value.trim();
+
+                const users = getUsers();
+                const user = users[email];
+
+                if (!user || user.password !== password) {
+                    alert('Incorrect email or password.');
+                    return;
+                }
+
+                setCurrentUser({ name: user.name, email, password });
+                entries = loadEntriesFromStorage(userStorageKey(email));
+                updateAccountButton();
+                closeModal(authModal);
+                loginForm.reset();
+                render();
+                setStatus('Welcome back! Your saved entries are loaded.');
+            }
+
+            createAccountBtn.addEventListener('click', () => {
+                openCreateAccount();
             });
 
-            createAccountBtn.addEventListener('click', openCreateAccount);
             accountBtn.addEventListener('click', () => {
                 const user = getCurrentUser();
                 if (user) {
                     clearCurrentUser();
                     updateAccountButton();
+                    entries = loadEntriesFromStorage(guestKey);
+                    render();
+                    setStatus('You are signed out. Your saved account entries remain on this device.');
                     return;
                 }
                 openLogin();
             });
 
-            document.querySelectorAll('[data-close]').forEach((button) => {
-                button.addEventListener('click', () => {
-                    closeModal(clearModal);
-                    closeModal(authModal);
-                });
-            });
-
-            document.querySelectorAll('.auth-tab').forEach((tab) => {
-                tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
-            });
-
-            createAccountForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const name = document.getElementById('authName').value.trim();
-                const email = document.getElementById('createEmail').value.trim();
-                const password = document.getElementById('createPassword').value;
-
-                if (!name || !email || !password) return;
-
-                const users = getUsers();
-                users[email] = { name, email, password };
-                saveUsers(users);
-                setCurrentUser({ name, email, password });
-                updateAccountButton();
-                closeModal(authModal);
-                createAccountForm.reset();
-            });
-
-            loginForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const email = document.getElementById('loginEmail').value.trim();
-                const password = document.getElementById('loginPassword').value;
-                const users = getUsers();
-
-                const user = users[email];
-                if (!user || user.password !== password) {
-                    alert('Credenciales incorrectas');
-                    return;
-                }
-
-                setCurrentUser({ name: user.name, email: user.email, password: user.password });
-                updateAccountButton();
-                closeModal(authModal);
-                loginForm.reset();
-            });
+            createAccountForm.addEventListener('submit', handleCreateAccount);
+            loginForm.addEventListener('submit', handleLogin);
 
             continueGuestBtn.addEventListener('click', () => {
                 clearCurrentUser();
+                entries = loadEntriesFromStorage(guestKey);
                 updateAccountButton();
                 closeModal(authModal);
+                setStatus('Guest mode is active. Your guest entries are stored locally.');
+                render();
+            });
+
+            saveMapBtn.addEventListener('click', () => {
+                saveEntries();
+                const user = getCurrentUser();
+                if (user && user.email) {
+                    setStatus(`Saved to ${user.email}. Your changes stay in your account.`);
+                } else {
+                    setStatus('Saved locally as guest. Log in later to keep these entries on your account.');
+                }
+            });
+
+            clearAllBtn.addEventListener('click', () => {
+                if (entries.length === 0) return;
+                openModal(clearModal);
             });
 
             confirmDeleteBtn.addEventListener('click', () => {
                 entries = [];
                 render();
                 closeModal(clearModal);
+                setStatus('All markers were removed. Save map to keep the change.');
             });
 
-            clearAllBtn.addEventListener('click', () => {
-                if (entries.length > 0) openModal(clearModal);
+            document.querySelectorAll('[data-close]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const modalType = button.dataset.close;
+                    if (modalType === 'clear') closeModal(clearModal);
+                    if (modalType === 'auth') closeModal(authModal);
+                });
             });
+
+            authTabs.forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    setAuthTab(tab.dataset.authTab);
+                });
+            });
+
+            mapContainer.addEventListener('click', (event) => {
+                if (event.target.closest('.zoom-btn')) return;
+                if (event.target.closest('.delete-btn')) return;
+                if (event.target.closest('.marker')) return;
+                if (isDraggingMap || mapMovedDuringGesture) return;
+                addMarkerAtPointer(event.clientX, event.clientY);
+            });
+
+            entriesContainer.addEventListener('click', (event) => {
+                const deleteButton = event.target.closest('.delete-btn');
+                if (!deleteButton) return;
+                const index = Number(deleteButton.dataset.index);
+                if (Number.isNaN(index)) return;
+                entries.splice(index, 1);
+                render();
+                setStatus('Marker deleted. Save map to keep the change.');
+            });
+
+            mapViewport.addEventListener('pointerdown', handleMapPointerDown);
+            mapViewport.addEventListener('pointermove', handleMapPointerMove);
+            mapViewport.addEventListener('pointerup', handleMapPointerUp);
+            mapViewport.addEventListener('pointerleave', handleMapPointerUp);
+            mapViewport.addEventListener('pointercancel', handleMapPointerUp);
+
+            zoomInBtn.addEventListener('click', zoomIn);
+            zoomOutBtn.addEventListener('click', zoomOut);
+            zoomResetBtn.addEventListener('click', resetZoom);
+
+            window.addEventListener('resize', fitMapToViewport);
 
             updateAccountButton();
+            refreshEntriesFromCurrentUser();
             fitMapToViewport();
-            render();
+            setStatus('Your map is ready.');
         });
     </script>
 </body>
