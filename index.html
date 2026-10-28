@@ -314,12 +314,12 @@
       <form id="loginForm" class="modal-form account-form active">
         <div class="field">
           <label for="loginUsername">Username</label>
-          <input id="loginUsername" type="text" placeholder="Your username" minlength="3" maxlength="32" required />
+          <input id="loginUsername" type="text" placeholder="Your username" maxlength="32" autocomplete="username" required />
         </div>
 
         <div class="field">
           <label for="loginPassword">Password</label>
-          <input id="loginPassword" type="password" placeholder="Your password" required />
+          <input id="loginPassword" type="password" placeholder="Your password" maxlength="128" autocomplete="current-password" required />
         </div>
 
         <button type="submit" class="btn">Log in</button>
@@ -690,7 +690,7 @@
 
       createAccountBtn.addEventListener('click', () => {
         setAccountStatus('', '');
-        showAccountMode('create');
+        showAccountMode(getActiveAccount() ? 'login' : 'create');
         openModal(accountModal);
       });
 
