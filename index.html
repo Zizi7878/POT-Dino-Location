@@ -706,6 +706,9 @@
             let dragStartPanY = 0;
             let isDraggingMap = false;
             let mapMovedDuringGesture = false;
+            let activePointers = new Map();
+            let pinchStartDistance = null;
+            let pinchStartZoom = 1;
 
             function clamp(value, min, max) {
                 return Math.min(Math.max(value, min), max);
@@ -947,40 +950,85 @@
             });
 
             function beginMapDrag(event) {
-                if (event.button !== 0) return;
                 if (event.target.closest('.zoom-btn')) return;
                 if (event.target.closest('.marker')) return;
+                if (event.pointerType === 'mouse' && event.button !== 0) return;
 
-                isDraggingMap = true;
-                mapViewport.classList.add('dragging');
-                dragStartX = event.clientX;
-                dragStartY = event.clientY;
-                dragStartPanX = panX;
-                dragStartPanY = panY;
-                mapMovedDuringGesture = false;
-                mapViewport.setPointerCapture(event.pointerId);
+                activePointers.set(event.pointerId, {
+                    x: event.clientX,
+                    y: event.clientY
+                });
+
+                if (activePointers.size === 1) {
+                    isDraggingMap = true;
+                    mapViewport.classList.add('dragging');
+                    dragStartX = event.clientX;
+                    dragStartY = event.clientY;
+                    dragStartPanX = panX;
+                    dragStartPanY = panY;
+                    mapMovedDuringGesture = false;
+                    mapViewport.setPointerCapture(event.pointerId);
+                }
+
+                if (activePointers.size === 2) {
+                    const positions = [...activePointers.values()];
+                    pinchStartDistance = Math.hypot(
+                        positions[1].x - positions[0].x,
+                        positions[1].y - positions[0].y
+                    );
+                    pinchStartZoom = zoomLevel;
+                }
             }
 
             function moveMapDrag(event) {
-                if (!isDraggingMap) return;
+                if (!activePointers.has(event.pointerId)) return;
 
-                const dx = event.clientX - dragStartX;
-                const dy = event.clientY - dragStartY;
+                activePointers.set(event.pointerId, {
+                    x: event.clientX,
+                    y: event.clientY
+                });
 
-                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-                    mapMovedDuringGesture = true;
+                if (activePointers.size === 1) {
+                    const dx = event.clientX - dragStartX;
+                    const dy = event.clientY - dragStartY;
+
+                    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                        mapMovedDuringGesture = true;
+                    }
+
+                    panX = dragStartPanX + dx;
+                    panY = dragStartPanY + dy;
+                    applyZoomTransform();
+                    return;
                 }
 
-                panX = dragStartPanX + dx;
-                panY = dragStartPanY + dy;
-                applyZoomTransform();
+                if (activePointers.size >= 2 && pinchStartDistance) {
+                    const positions = [...activePointers.values()];
+                    const currentDistance = Math.hypot(
+                        positions[1].x - positions[0].x,
+                        positions[1].y - positions[0].y
+                    );
+
+                    if (currentDistance > 0) {
+                        const scaleFactor = currentDistance / pinchStartDistance;
+                        zoomLevel = clamp(Number((pinchStartZoom * scaleFactor).toFixed(2)), minZoom, maxZoom);
+                        applyZoomTransform();
+                    }
+                }
             }
 
             function endMapDrag(event) {
-                if (!isDraggingMap) return;
-                isDraggingMap = false;
-                mapViewport.classList.remove('dragging');
-                mapViewport.releasePointerCapture?.(event?.pointerId);
+                if (activePointers.has(event.pointerId)) {
+                    activePointers.delete(event.pointerId);
+                }
+
+                if (activePointers.size === 0) {
+                    isDraggingMap = false;
+                    mapViewport.classList.remove('dragging');
+                    pinchStartDistance = null;
+                    pinchStartZoom = zoomLevel;
+                    mapViewport.releasePointerCapture?.(event?.pointerId);
+                }
             }
 
             mapViewport.addEventListener('pointerdown', beginMapDrag);
@@ -1003,42 +1051,34 @@
                 }
             }, { passive: false });
 
-            entriesContainer.addEventListener('click', (event) => {
-                if (event.target.classList.contains('delete-btn')) {
-                    const index = Number(event.target.dataset.index);
-                    entries.splice(index, 1);
-                    render();
-                }
-            });
+            zoomInBtn.addEventListener('click', zoomIn);
+            zoomOutBtn.addEventListener('click', zoomOut);
+            zoomResetBtn.addEventListener('click', resetZoom);
 
-            clearAllBtn.addEventListener('click', () => {
-                if (entries.length === 0) return;
-                openModal(clearModal);
-            });
-
+            createAccountBtn.addEventListener('click', openCreateAccount);
+            accountBtn.addEventListener('click', toggleAuth);
             confirmDeleteBtn.addEventListener('click', () => {
                 entries = [];
                 render();
                 closeModal(clearModal);
             });
 
-            document.querySelectorAll('[data-close]').forEach((element) => {
-                element.addEventListener('click', () => {
-                    const modalName = element.dataset.close;
-                    if (modalName === 'clear') closeModal(clearModal);
-                    if (modalName === 'auth') closeModal(authModal);
+            clearAllBtn.addEventListener('click', () => {
+                if (entries.length > 0) {
+                    openModal(clearModal);
+                }
+            });
+
+            document.querySelectorAll('[data-close]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const modalName = button.dataset.close;
+                    const modal = modalName === 'clear' ? clearModal : authModal;
+                    closeModal(modal);
                 });
             });
 
-            createAccountBtn.addEventListener('click', openCreateAccount);
-            accountBtn.addEventListener('click', () => {
-                const user = getCurrentUser();
-                if (user) {
-                    clearCurrentUser();
-                    updateAccountButton();
-                    return;
-                }
-                openLogin();
+            authTabs.forEach((tab) => {
+                tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
             });
 
             continueGuestBtn.addEventListener('click', () => {
@@ -1052,11 +1092,10 @@
                 const name = document.getElementById('authName').value.trim();
                 const email = document.getElementById('createEmail').value.trim();
                 const password = document.getElementById('createPassword').value.trim();
-
                 if (!name || !email || !password) return;
 
                 const users = getUsers();
-                users[email.toLowerCase()] = { name, email, password };
+                users[email] = { name, email, password };
                 saveUsers(users);
                 setCurrentUser({ name, email });
                 updateAccountButton();
@@ -1069,32 +1108,44 @@
                 const email = document.getElementById('loginEmail').value.trim();
                 const password = document.getElementById('loginPassword').value.trim();
                 const users = getUsers();
-                const savedUser = users[email.toLowerCase()];
 
-                if (!savedUser || savedUser.password !== password) {
-                    alert('Credenciales inválidas');
+                if (!users[email] || users[email].password !== password) {
+                    alert('Credenciales incorrectas');
                     return;
                 }
 
-                setCurrentUser({ name: savedUser.name, email: savedUser.email });
+                setCurrentUser({ name: users[email].name, email });
                 updateAccountButton();
                 closeModal(authModal);
                 loginForm.reset();
             });
 
-            authTabs.forEach((tab) => {
-                tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
+            document.addEventListener('click', (event) => {
+                const target = event.target;
+                if (target.closest('.delete-btn')) {
+                    const index = Number(target.dataset.index);
+                    if (!Number.isNaN(index)) {
+                        entries.splice(index, 1);
+                        render();
+                    }
+                }
             });
 
-            zoomInBtn.addEventListener('click', zoomIn);
-            zoomOutBtn.addEventListener('click', zoomOut);
-            zoomResetBtn.addEventListener('click', resetZoom);
+            window.addEventListener('resize', () => {
+                fitMapToViewport();
+            });
 
-            mapImg.addEventListener('load', fitMapToViewport);
-            window.addEventListener('resize', fitMapToViewport);
-            fitMapToViewport();
-            render();
-            updateAccountButton();
+            mapImg.addEventListener('load', () => {
+                fitMapToViewport();
+                render();
+                updateAccountButton();
+            });
+
+            if (mapImg.complete) {
+                fitMapToViewport();
+                render();
+                updateAccountButton();
+            }
         });
     </script>
 </body>
