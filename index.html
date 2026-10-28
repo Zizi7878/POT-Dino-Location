@@ -185,6 +185,9 @@
             position: relative;
             width: 100%;
             height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transform-origin: center center;
             will-change: transform;
             transition: transform 0.08s ease-out;
@@ -192,11 +195,11 @@
 
         .gondwa-map-img {
             display: block;
-            width: auto;
-            height: auto;
-            max-width: none;
-            max-height: none;
-            object-fit: none;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
             transform-origin: center center;
             user-select: none;
             pointer-events: auto;
@@ -1000,163 +1003,99 @@
                     return;
                 }
 
-                const target = event.target;
-                if (target.closest('.zoom-btn') || target.closest('.delete-btn')) {
+                if (event.target.closest('.marker') || event.target.closest('.zoom-btn') || event.target.closest('.modal')) {
                     return;
                 }
 
                 addMarkerAtPointer(event.clientX, event.clientY);
             });
 
-            function beginMapDrag(event) {
-                if (event.target.closest('.zoom-btn')) return;
-                if (event.target.closest('.marker')) return;
-                if (event.pointerType === 'mouse' && event.button !== 0) return;
-
-                activePointers.set(event.pointerId, {
-                    x: event.clientX,
-                    y: event.clientY
-                });
-
-                if (activePointers.size === 1) {
-                    isDraggingMap = true;
-                    mapViewport.classList.add('dragging');
-                    dragStartX = event.clientX;
-                    dragStartY = event.clientY;
-                    dragStartPanX = panX;
-                    dragStartPanY = panY;
-                    mapMovedDuringGesture = false;
-                    mapViewport.setPointerCapture(event.pointerId);
-                }
-
-                if (activePointers.size === 2) {
-                    const positions = [...activePointers.values()];
-                    pinchStartDistance = Math.hypot(
-                        positions[1].x - positions[0].x,
-                        positions[1].y - positions[0].y
-                    );
-                    pinchStartZoom = zoomLevel;
-                }
-            }
-
-            function moveMapDrag(event) {
-                if (!activePointers.has(event.pointerId)) return;
-
-                activePointers.set(event.pointerId, {
-                    x: event.clientX,
-                    y: event.clientY
-                });
-
-                if (activePointers.size === 1) {
-                    const dx = event.clientX - dragStartX;
-                    const dy = event.clientY - dragStartY;
-
-                    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-                        mapMovedDuringGesture = true;
-                    }
-
-                    panX = dragStartPanX + dx;
-                    panY = dragStartPanY + dy;
-                    applyZoomTransform();
+            mapContainer.addEventListener('pointerdown', (event) => {
+                if (event.target.closest('.marker') || event.target.closest('.zoom-btn') || event.target.closest('button')) {
                     return;
                 }
 
-                if (activePointers.size >= 2 && pinchStartDistance) {
-                    const positions = [...activePointers.values()];
-                    const currentDistance = Math.hypot(
-                        positions[1].x - positions[0].x,
-                        positions[1].y - positions[0].y
-                    );
+                isDraggingMap = true;
+                mapMovedDuringGesture = false;
+                mapViewport.classList.add('dragging');
+                dragStartX = event.clientX;
+                dragStartY = event.clientY;
+                dragStartPanX = panX;
+                dragStartPanY = panY;
+                mapViewport.setPointerCapture(event.pointerId);
+            });
 
-                    if (currentDistance > 0) {
-                        const scaleFactor = currentDistance / pinchStartDistance;
-                        zoomLevel = clamp(Number((pinchStartZoom * scaleFactor).toFixed(2)), minZoom, maxZoom);
-                        applyZoomTransform();
-                    }
-                }
-            }
+            mapViewport.addEventListener('pointermove', (event) => {
+                if (!isDraggingMap) return;
 
-            function endMapDrag(event) {
-                if (activePointers.has(event.pointerId)) {
-                    activePointers.delete(event.pointerId);
-                }
+                const deltaX = event.clientX - dragStartX;
+                const deltaY = event.clientY - dragStartY;
+                panX = dragStartPanX + deltaX;
+                panY = dragStartPanY + deltaY;
+                mapMovedDuringGesture = true;
+                applyZoomTransform();
+            });
 
-                if (activePointers.size === 0) {
-                    isDraggingMap = false;
-                    mapViewport.classList.remove('dragging');
-                    pinchStartDistance = null;
-                    pinchStartZoom = zoomLevel;
-                    mapViewport.releasePointerCapture?.(event?.pointerId);
-                }
-            }
+            mapViewport.addEventListener('pointerup', () => {
+                isDraggingMap = false;
+                mapViewport.classList.remove('dragging');
+            });
 
-            mapViewport.addEventListener('pointerdown', beginMapDrag);
-            mapImg.addEventListener('pointerdown', beginMapDrag);
-            mapViewport.addEventListener('pointermove', moveMapDrag);
-            mapImg.addEventListener('pointermove', moveMapDrag);
-            mapViewport.addEventListener('pointerup', endMapDrag);
-            mapImg.addEventListener('pointerup', endMapDrag);
-            mapViewport.addEventListener('pointerleave', endMapDrag);
-            mapImg.addEventListener('pointerleave', endMapDrag);
-            mapViewport.addEventListener('pointercancel', endMapDrag);
-            mapImg.addEventListener('pointercancel', endMapDrag);
-
-            mapViewport.addEventListener('wheel', (event) => {
-                event.preventDefault();
-                if (event.deltaY < 0) {
-                    zoomIn();
-                } else {
-                    zoomOut();
-                }
-            }, { passive: false });
+            mapViewport.addEventListener('pointerleave', () => {
+                isDraggingMap = false;
+                mapViewport.classList.remove('dragging');
+            });
 
             zoomInBtn.addEventListener('click', zoomIn);
             zoomOutBtn.addEventListener('click', zoomOut);
             zoomResetBtn.addEventListener('click', resetZoom);
 
-            createAccountBtn.addEventListener('click', openCreateAccount);
-            accountBtn.addEventListener('click', toggleAuth);
-            confirmDeleteBtn.addEventListener('click', () => {
-                entries = [];
+            window.addEventListener('resize', resetZoom);
+
+            document.addEventListener('click', (event) => {
+                const deleteBtn = event.target.closest('.delete-btn');
+                if (!deleteBtn) return;
+
+                const index = Number(deleteBtn.dataset.index);
+                if (Number.isNaN(index)) return;
+                entries.splice(index, 1);
                 render();
-                closeModal(clearModal);
             });
 
-            clearAllBtn.addEventListener('click', () => {
-                if (entries.length > 0) {
-                    openModal(clearModal);
+            createAccountBtn.addEventListener('click', openCreateAccount);
+            accountBtn.addEventListener('click', () => {
+                const user = getCurrentUser();
+                if (user) {
+                    clearCurrentUser();
+                    updateAccountButton();
+                    return;
                 }
+                openLogin();
             });
 
             document.querySelectorAll('[data-close]').forEach((button) => {
                 button.addEventListener('click', () => {
-                    const modalName = button.dataset.close;
-                    const modal = modalName === 'clear' ? clearModal : authModal;
-                    closeModal(modal);
+                    closeModal(clearModal);
+                    closeModal(authModal);
                 });
             });
 
-            authTabs.forEach((tab) => {
+            document.querySelectorAll('.auth-tab').forEach((tab) => {
                 tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
-            });
-
-            continueGuestBtn.addEventListener('click', () => {
-                clearCurrentUser();
-                updateAccountButton();
-                closeModal(authModal);
             });
 
             createAccountForm.addEventListener('submit', (event) => {
                 event.preventDefault();
                 const name = document.getElementById('authName').value.trim();
                 const email = document.getElementById('createEmail').value.trim();
-                const password = document.getElementById('createPassword').value.trim();
+                const password = document.getElementById('createPassword').value;
+
                 if (!name || !email || !password) return;
 
                 const users = getUsers();
                 users[email] = { name, email, password };
                 saveUsers(users);
-                setCurrentUser({ name, email });
+                setCurrentUser({ name, email, password });
                 updateAccountButton();
                 closeModal(authModal);
                 createAccountForm.reset();
@@ -1165,46 +1104,40 @@
             loginForm.addEventListener('submit', (event) => {
                 event.preventDefault();
                 const email = document.getElementById('loginEmail').value.trim();
-                const password = document.getElementById('loginPassword').value.trim();
+                const password = document.getElementById('loginPassword').value;
                 const users = getUsers();
 
-                if (!users[email] || users[email].password !== password) {
+                const user = users[email];
+                if (!user || user.password !== password) {
                     alert('Credenciales incorrectas');
                     return;
                 }
 
-                setCurrentUser({ name: users[email].name, email });
+                setCurrentUser({ name: user.name, email: user.email, password: user.password });
                 updateAccountButton();
                 closeModal(authModal);
                 loginForm.reset();
             });
 
-            document.addEventListener('click', (event) => {
-                const target = event.target;
-                if (target.closest('.delete-btn')) {
-                    const index = Number(target.dataset.index);
-                    if (!Number.isNaN(index)) {
-                        entries.splice(index, 1);
-                        render();
-                    }
-                }
-            });
-
-            window.addEventListener('resize', () => {
-                fitMapToViewport();
-            });
-
-            mapImg.addEventListener('load', () => {
-                fitMapToViewport();
-                render();
+            continueGuestBtn.addEventListener('click', () => {
+                clearCurrentUser();
                 updateAccountButton();
+                closeModal(authModal);
             });
 
-            if (mapImg.complete) {
-                fitMapToViewport();
+            confirmDeleteBtn.addEventListener('click', () => {
+                entries = [];
                 render();
-                updateAccountButton();
-            }
+                closeModal(clearModal);
+            });
+
+            clearAllBtn.addEventListener('click', () => {
+                if (entries.length > 0) openModal(clearModal);
+            });
+
+            updateAccountButton();
+            fitMapToViewport();
+            render();
         });
     </script>
 </body>
