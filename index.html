@@ -132,11 +132,13 @@
     .map-panel { display: flex; flex-direction: column; min-height: 760px; }
     .map-frame { padding: 1rem; background: rgba(255, 255, 255, 0.01); }
     .map-view { position: relative; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); min-height: 560px; background: rgba(7, 15, 24, 0.95); }
-    .map-layer { position: relative; width: 100%; min-height: 560px; display: flex; align-items: center; justify-content: center; background: #071420; cursor: crosshair; }
-    .map-image { width: 100%; min-height: 560px; object-fit: contain; pointer-events: none; user-select: none; transform-origin: center center; transition: transform 0.15s ease; }
-    .zoom-controls { position: absolute; top: 1rem; right: 1rem; z-index: 10; display: flex; flex-direction: column; gap: 0.5rem; background: rgba(9, 18, 32, 0.72); border: 1px solid var(--border); border-radius: 12px; padding: 0.45rem; }
+    .map-layer { position: relative; width: 100%; min-height: 560px; display: flex; align-items: center; justify-content: center; background: #071420; cursor: crosshair; user-select: none; touch-action: none; overflow: hidden; }
+    .map-layer.dragging { cursor: grabbing; }
+    .map-image { position: relative; z-index: 1; width: 100%; min-height: 560px; object-fit: contain; pointer-events: none; user-select: none; transform-origin: center center; transition: transform 0.15s ease; will-change: transform; }
+    .marker-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+    .marker { position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 0 12px rgba(0,0,0,0.7); z-index: 10; }
+    .zoom-controls { position: absolute; top: 1rem; right: 1rem; z-index: 10; display: flex; flex-direction: column; gap: 0.5rem; background: rgba(9, 18, 32, 0.72); border: 1px solid var(--border); border-radius: 12px; padding: 0.5rem; backdrop-filter: blur(4px); }
     .zoom-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--border); background: rgba(16, 28, 48, 0.9); color: var(--text); cursor: pointer; font-size: 1.25rem; }
-    .marker { position: absolute; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 0 12px rgba(0,0,0,0.7); z-index: 2; }
 
     .map-form { display: grid; grid-template-columns: 1.2fr 1.8fr auto; gap: 0.75rem; padding: 1rem; border-top: 1px solid var(--border); background: rgba(255,255,255,0.01); align-items: end; }
     .field { display: flex; flex-direction: column; gap: 0.38rem; }
@@ -146,7 +148,7 @@
 
     .map-list { padding: 0 1rem 1rem; }
     .entry-list { display: flex; flex-direction: column; gap: 0.7rem; max-height: 220px; overflow-y: auto; }
-    .entry-card { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; background: rgba(8, 17, 29, 0.8); border-left: 4px solid var(--accent); border-radius: 10px; padding: 0.7rem 0.8rem; }
+    .entry-card { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; background: rgba(8, 17, 29, 0.8); border-left: 4px solid var(--accent); border-radius: 10px; padding: 0.8rem 0.8rem; }
     .entry-card h4 { margin: 0 0 0.2rem; font-size: 0.96rem; }
     .entry-card p { margin: 0; color: var(--muted); font-size: 0.76rem; line-height: 1.5; }
     .entry-card button { background: transparent; color: var(--muted); border: none; font-size: 1.3rem; cursor: pointer; }
@@ -215,6 +217,7 @@
           </div>
           <div class="map-layer" id="mapLayer">
             <img class="map-image" src="./gondwa-map.jpg" alt="Gondwa map" />
+            <div class="marker-layer" id="markerLayer" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -341,6 +344,8 @@
       const BOARD_ALLOWED_USERNAME = 'zizi';
 
       const mapLayer = document.getElementById('mapLayer');
+      const mapImage = document.querySelector('.map-image');
+      const markerLayer = document.getElementById('markerLayer');
       const entriesList = document.getElementById('entriesList');
       const dinoSelect = document.getElementById('dinoSelect');
       const notesInput = document.getElementById('notesInput');
@@ -365,6 +370,11 @@
 
       let mapEntries = loadMapEntries();
       let mapZoom = 1;
+      let mapOffsetX = 0;
+      let mapOffsetY = 0;
+      let dragStart = null;
+      let draggedMap = false;
+      let ignoreNextClick = false;
 
       function normalizeUsername(value) {
         return String(value || '').trim().toLowerCase();
@@ -468,17 +478,24 @@
         localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
       }
 
+      function applyMapTransform() {
+        mapImage.style.transform = `translate(${mapOffsetX}px, ${mapOffsetY}px) scale(${mapZoom})`;
+        const draggable = mapZoom > 1;
+        mapLayer.classList.toggle('dragging', Boolean(dragStart));
+        mapLayer.style.cursor = draggable ? (dragStart ? 'grabbing' : 'grab') : 'crosshair';
+      }
+
       function renderMapMarkers() {
-        document.querySelectorAll('.map-marker').forEach((marker) => marker.remove());
+        markerLayer.innerHTML = '';
 
         mapEntries.forEach((entry) => {
           const marker = document.createElement('div');
-          marker.className = 'marker map-marker';
+          marker.className = 'marker';
           marker.style.left = `${entry.x}%`;
           marker.style.top = `${entry.y}%`;
           marker.style.backgroundColor = entry.color || '#7c9cff';
           marker.title = `${entry.dino}${entry.notes ? ` — ${entry.notes}` : ''}`;
-          mapLayer.appendChild(marker);
+          markerLayer.appendChild(marker);
         });
       }
 
@@ -700,10 +717,58 @@
           setAccountStatus('Choose a dinosaur before saving a marker.', 'error');
           return;
         }
-        saveMapMarkerFromClick(mapLayer.getBoundingClientRect().left + 10, mapLayer.getBoundingClientRect().top + 10);
+        const rect = mapLayer.getBoundingClientRect();
+        saveMapMarkerFromClick(rect.left + rect.width * 0.1, rect.top + rect.height * 0.1);
       });
 
+      mapLayer.addEventListener('pointerdown', (event) => {
+        if (mapZoom <= 1) return;
+        dragStart = {
+          x: event.clientX,
+          y: event.clientY,
+          offsetX: mapOffsetX,
+          offsetY: mapOffsetY
+        };
+        draggedMap = false;
+        mapLayer.setPointerCapture(event.pointerId);
+        applyMapTransform();
+      });
+
+      mapLayer.addEventListener('pointermove', (event) => {
+        if (!dragStart) return;
+        const dx = event.clientX - dragStart.x;
+        const dy = event.clientY - dragStart.y;
+        mapOffsetX = dragStart.offsetX + dx;
+        mapOffsetY = dragStart.offsetY + dy;
+        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+          draggedMap = true;
+          ignoreNextClick = true;
+        }
+        applyMapTransform();
+      });
+
+      function stopDragging() {
+        if (dragStart) {
+          dragStart = null;
+          applyMapTransform();
+        }
+      }
+
+      mapLayer.addEventListener('pointerup', stopDragging);
+      mapLayer.addEventListener('pointerleave', stopDragging);
+      mapLayer.addEventListener('pointercancel', stopDragging);
+
       mapLayer.addEventListener('click', (event) => {
+        if (ignoreNextClick) {
+          ignoreNextClick = false;
+          return;
+        }
+
+        if (draggedMap) {
+          draggedMap = false;
+          return;
+        }
+
         const activeAccount = getActiveAccount();
         if (!activeAccount) {
           setAccountStatus('Please create an account or log in before saving entries.', 'error');
@@ -716,17 +781,19 @@
 
       zoomInBtn.addEventListener('click', () => {
         mapZoom = Math.min(mapZoom + 0.1, 2.2);
-        mapLayer.style.transform = `scale(${mapZoom})`;
+        applyMapTransform();
       });
 
       zoomOutBtn.addEventListener('click', () => {
         mapZoom = Math.max(mapZoom - 0.1, 0.8);
-        mapLayer.style.transform = `scale(${mapZoom})`;
+        applyMapTransform();
       });
 
       zoomResetBtn.addEventListener('click', () => {
         mapZoom = 1;
-        mapLayer.style.transform = 'scale(1)';
+        mapOffsetX = 0;
+        mapOffsetY = 0;
+        applyMapTransform();
       });
 
       accountModal.addEventListener('click', (event) => {
@@ -742,6 +809,7 @@
       renderMapMarkers();
       renderEntriesList();
       updateAccountButtons();
+      applyMapTransform();
     })();
   </script>
 </body>
