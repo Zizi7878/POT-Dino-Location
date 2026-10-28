@@ -11,12 +11,15 @@
             --panel-border: #232d42;
             --accent-color: #6366f1;
             --accent-hover: #4f46e5;
+            --accent-soft: rgba(99, 102, 241, 0.14);
             --text-color: #f3f4f6;
             --text-muted: #9ca3af;
             --danger-color: #ef4444;
             --danger-dark: #b91c1c;
+            --success-color: #22c55e;
             --modal-bg: rgba(4, 8, 15, 0.78);
             --shadow: rgba(0, 0, 0, 0.45);
+            --discord-color: #5865F2;
         }
 
         * {
@@ -47,6 +50,7 @@
 
         .header-text {
             flex: 1;
+            min-width: 220px;
             text-align: center;
         }
 
@@ -62,19 +66,48 @@
             margin-top: 0.2rem;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .discord-btn,
+        .secondary-btn,
         .login-btn {
-            background-color: var(--accent-color);
-            border: 1px solid var(--accent-color);
-            color: white;
             border-radius: 999px;
             padding: 0.65rem 1rem;
             font-weight: 700;
             cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.2s ease;
+            transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        .discord-btn {
+            background-color: var(--discord-color);
+            border: 1px solid var(--discord-color);
+            color: white;
+        }
+
+        .secondary-btn {
+            background: transparent;
+            border: 1px solid var(--panel-border);
+            color: var(--text-color);
+        }
+
+        .login-btn {
+            background-color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            color: white;
+        }
+
+        .discord-btn:hover,
+        .secondary-btn:hover,
         .login-btn:hover {
-            background-color: var(--accent-hover);
             transform: translateY(-1px);
         }
 
@@ -91,7 +124,7 @@
 
         @media (min-width: 1024px) {
             .main-container {
-                grid-template-columns: 1fr 340px;
+                grid-template-columns: minmax(0, 1fr) 340px;
             }
         }
 
@@ -103,13 +136,18 @@
             overflow: hidden;
             border: 1px solid var(--panel-border);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            cursor: crosshair;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             user-select: none;
             aspect-ratio: 1 / 1;
             max-height: 82vh;
+        }
+
+        .map-viewport {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            cursor: crosshair;
+            background: #08111e;
         }
 
         .gondwa-map-img {
@@ -117,6 +155,39 @@
             height: 100%;
             object-fit: cover;
             display: block;
+            transform-origin: center center;
+            transition: transform 0.18s ease;
+            will-change: transform;
+        }
+
+        .map-zoom-controls {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            background: rgba(11, 15, 25, 0.56);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 0.4rem;
+            backdrop-filter: blur(2px);
+        }
+
+        .zoom-btn {
+            width: 38px;
+            height: 38px;
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            background: rgba(17, 24, 39, 0.85);
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+
+        .zoom-btn:hover {
+            border-color: var(--accent-color);
         }
 
         .marker {
@@ -292,7 +363,7 @@
 
         .modal-card {
             position: relative;
-            width: min(420px, calc(100vw - 2rem));
+            width: min(440px, calc(100vw - 2rem));
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
             border-radius: 14px;
@@ -324,13 +395,45 @@
             line-height: 1.5;
         }
 
+        .auth-toggle {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 10px;
+            padding: 0.35rem;
+        }
+
+        .auth-tab {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 0.7rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .auth-tab.active {
+            background: rgba(99, 102, 241, 0.2);
+            color: white;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+        }
+
         .auth-form {
             display: flex;
             flex-direction: column;
             gap: 0.9rem;
         }
 
-        .auth-submit {
+        .auth-form.hidden {
+            display: none;
+        }
+
+        .auth-submit,
+        .guest-link {
             width: 100%;
             padding: 0.9rem 1rem;
             border-radius: 10px;
@@ -343,21 +446,17 @@
             transition: transform 0.15s ease, background 0.15s ease;
         }
 
-        .auth-submit:hover {
+        .auth-submit:hover,
+        .guest-link:hover {
             background: var(--accent-hover);
             transform: translateY(-1px);
         }
 
         .guest-link {
-            width: 100%;
             margin-top: 0.9rem;
             background: transparent;
             color: var(--text-muted);
             border: 1px solid var(--panel-border);
-            border-radius: 10px;
-            padding: 0.75rem 1rem;
-            cursor: pointer;
-            font-weight: 600;
         }
 
         .modal-actions {
@@ -397,12 +496,24 @@
             <h1>Path of Titans — Registro de Gondwa</h1>
             <p>Haz clic en cualquier ubicación del mapa para registrar el avistamiento de tu dinosaurio.</p>
         </div>
-        <button id="accountBtn" class="login-btn" type="button">Iniciar sesión</button>
+
+        <div class="header-actions">
+            <a class="discord-btn" href="https://discord.gg/f9PudgP6J" target="_blank" rel="noreferrer">Discord</a>
+            <button id="createAccountBtn" class="secondary-btn" type="button">Create account</button>
+            <button id="accountBtn" class="login-btn" type="button">Log in</button>
+        </div>
     </header>
 
     <div class="main-container">
         <div class="map-wrapper" id="mapContainer">
-            <img src="./gondwa-map.jpg" alt="Mapa de Gondwa de Path of Titans" class="gondwa-map-img" id="gondwaMapImg">
+            <div class="map-viewport" id="mapViewport">
+                <div class="map-zoom-controls">
+                    <button type="button" class="zoom-btn" id="zoomInBtn" aria-label="Zoom in">+</button>
+                    <button type="button" class="zoom-btn" id="zoomOutBtn" aria-label="Zoom out">−</button>
+                    <button type="button" class="zoom-btn" id="zoomResetBtn" aria-label="Reset zoom">↺</button>
+                </div>
+                <img src="https://i.ibb.co/3p3J862/gondwa-map.jpg" alt="Mapa de Gondwa de Path of Titans" class="gondwa-map-img" id="gondwaMapImg">
+            </div>
         </div>
 
         <div class="panel">
@@ -491,53 +602,93 @@
         <div class="modal-backdrop" data-close="auth"></div>
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
             <button type="button" class="modal-close" data-close="auth" aria-label="Cerrar">×</button>
-            <h3 id="authTitle">Guarda tus entradas</h3>
-            <p>Usa una cuenta local con correo y contraseña para guardar tus marcadores en este dispositivo.</p>
+            <h3 id="authTitle">Guardar tus entradas</h3>
+            <p>Usa una cuenta local para guardar tus marcadores y volver más tarde.</p>
 
-            <form id="authForm" class="auth-form">
+            <div class="auth-toggle" aria-label="Authentication options">
+                <button type="button" class="auth-tab active" data-auth-tab="create">Create account</button>
+                <button type="button" class="auth-tab" data-auth-tab="login">Log in</button>
+            </div>
+
+            <form id="createAccountForm" class="auth-form">
                 <div class="form-group">
                     <label for="authName">Nombre</label>
                     <input id="authName" type="text" placeholder="Tu nombre de explorador" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="authEmail">Correo electrónico</label>
-                    <input id="authEmail" type="email" placeholder="correo@ejemplo.com" required>
+                    <label for="createEmail">Correo electrónico</label>
+                    <input id="createEmail" type="email" placeholder="correo@ejemplo.com" required>
                 </div>
 
                 <div class="form-group">
-                    <label for="authPassword">Contraseña</label>
-                    <input id="authPassword" type="password" placeholder="Crea una contraseña" required>
+                    <label for="createPassword">Contraseña</label>
+                    <input id="createPassword" type="password" placeholder="Crea una contraseña" required>
                 </div>
 
-                <button type="submit" class="auth-submit">Guardar mis entradas</button>
+                <button type="submit" class="auth-submit">Create account</button>
             </form>
 
-            <button type="button" class="guest-link" id="continueGuestBtn">Continuar como invitado</button>
+            <form id="loginForm" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="loginEmail">Correo electrónico</label>
+                    <input id="loginEmail" type="email" placeholder="correo@ejemplo.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <input id="loginPassword" type="password" placeholder="Tu contraseña" required>
+                </div>
+
+                <button type="submit" class="auth-submit">Log in</button>
+            </form>
+
+            <button type="button" class="guest-link" id="continueGuestBtn">Continue as guest</button>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const mapContainer = document.getElementById('mapContainer');
+            const mapViewport = document.getElementById('mapViewport');
             const mapImg = document.getElementById('gondwaMapImg');
             const dinoSelect = document.getElementById('dinoSelect');
             const notesInput = document.getElementById('notesInput');
             const entriesContainer = document.getElementById('entries');
             const countSpan = document.getElementById('count');
             const clearAllBtn = document.getElementById('clearAllBtn');
+            const createAccountBtn = document.getElementById('createAccountBtn');
             const accountBtn = document.getElementById('accountBtn');
             const clearModal = document.getElementById('clearModal');
             const authModal = document.getElementById('authModal');
             const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-            const authForm = document.getElementById('authForm');
-            const authNameInput = document.getElementById('authName');
-            const authEmailInput = document.getElementById('authEmail');
-            const authPasswordInput = document.getElementById('authPassword');
+            const createAccountForm = document.getElementById('createAccountForm');
+            const loginForm = document.getElementById('loginForm');
+            const authTabs = document.querySelectorAll('.auth-tab');
             const continueGuestBtn = document.getElementById('continueGuestBtn');
+            const zoomInBtn = document.getElementById('zoomInBtn');
+            const zoomOutBtn = document.getElementById('zoomOutBtn');
+            const zoomResetBtn = document.getElementById('zoomResetBtn');
 
-            const defaultMapImage = './gondwa-map.jpg';
             const guestKey = 'gondwa_pot_dino_entries_guest';
+            const currentUserKey = 'gondwa_current_user';
+            const usersKey = 'gondwa_users';
+            const minZoom = 1;
+            const maxZoom = 3;
+            const zoomStep = 0.15;
+            let zoomLevel = 1;
+
+            function getUsers() {
+                try {
+                    return JSON.parse(localStorage.getItem(usersKey)) || {};
+                } catch (error) {
+                    return {};
+                }
+            }
+
+            function saveUsers(users) {
+                localStorage.setItem(usersKey, JSON.stringify(users));
+            }
 
             function slugify(value) {
                 return String(value || '')
@@ -549,10 +700,18 @@
 
             function getCurrentUser() {
                 try {
-                    return JSON.parse(localStorage.getItem('gondwa_current_user')) || null;
+                    return JSON.parse(localStorage.getItem(currentUserKey)) || null;
                 } catch (error) {
                     return null;
                 }
+            }
+
+            function setCurrentUser(user) {
+                localStorage.setItem(currentUserKey, JSON.stringify(user));
+            }
+
+            function clearCurrentUser() {
+                localStorage.removeItem(currentUserKey);
             }
 
             function getStorageKey() {
@@ -562,8 +721,12 @@
             }
 
             function loadEntries() {
-                const saved = JSON.parse(localStorage.getItem(getStorageKey())) || [];
-                return saved;
+                try {
+                    const saved = JSON.parse(localStorage.getItem(getStorageKey())) || [];
+                    return saved;
+                } catch (error) {
+                    return [];
+                }
             }
 
             function saveEntries() {
@@ -573,11 +736,11 @@
             function updateAccountButton() {
                 const user = getCurrentUser();
                 if (!user) {
-                    accountBtn.textContent = 'Iniciar sesión';
+                    accountBtn.textContent = 'Log in';
                     return;
                 }
 
-                accountBtn.textContent = 'Cerrar sesión';
+                accountBtn.textContent = 'Log out';
             }
 
             function openModal(modal) {
@@ -590,26 +753,64 @@
                 modal.setAttribute('aria-hidden', 'true');
             }
 
+            function setAuthTab(tabName) {
+                const isCreate = tabName === 'create';
+                authTabs.forEach((tab) => {
+                    const active = tab.dataset.authTab === tabName;
+                    tab.classList.toggle('active', active);
+                });
+
+                createAccountForm.classList.toggle('hidden', !isCreate);
+                loginForm.classList.toggle('hidden', isCreate);
+            }
+
+            function openCreateAccount() {
+                setAuthTab('create');
+                openModal(authModal);
+            }
+
+            function openLogin() {
+                setAuthTab('login');
+                openModal(authModal);
+            }
+
             function toggleAuth() {
                 const user = getCurrentUser();
                 if (user) {
-                    localStorage.removeItem('gondwa_current_user');
+                    clearCurrentUser();
                     entries = JSON.parse(localStorage.getItem(guestKey)) || [];
                     updateAccountButton();
                     render();
                     return;
                 }
 
-                openModal(authModal);
+                openLogin();
+            }
+
+            function applyZoom() {
+                mapImg.style.transform = `scale(${zoomLevel})`;
+            }
+
+            function zoomIn() {
+                if (zoomLevel < maxZoom) {
+                    zoomLevel = Math.min(maxZoom, Number((zoomLevel + zoomStep).toFixed(2)));
+                    applyZoom();
+                }
+            }
+
+            function zoomOut() {
+                if (zoomLevel > minZoom) {
+                    zoomLevel = Math.max(minZoom, Number((zoomLevel - zoomStep).toFixed(2)));
+                    applyZoom();
+                }
+            }
+
+            function resetZoom() {
+                zoomLevel = minZoom;
+                applyZoom();
             }
 
             let entries = loadEntries();
-
-            if (localStorage.getItem('gondwa_custom_map_img')) {
-                mapImg.src = localStorage.getItem('gondwa_custom_map_img');
-            } else {
-                mapImg.src = defaultMapImage;
-            }
 
             function updateClearButton() {
                 clearAllBtn.disabled = entries.length === 0;
@@ -652,7 +853,7 @@
             }
 
             mapContainer.addEventListener('click', (e) => {
-                const rect = mapContainer.getBoundingClientRect();
+                const rect = mapImg.getBoundingClientRect();
                 const x = ((e.clientX - rect.left) / rect.width) * 100;
                 const y = ((e.clientY - rect.top) / rect.height) * 100;
 
@@ -671,6 +872,15 @@
                 notesInput.value = '';
                 render();
             });
+
+            mapViewport.addEventListener('wheel', (event) => {
+                event.preventDefault();
+                if (event.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            }, { passive: false });
 
             entriesContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-btn')) {
@@ -699,45 +909,90 @@
                 el.addEventListener('click', () => closeModal(authModal));
             });
 
+            createAccountBtn.addEventListener('click', openCreateAccount);
             accountBtn.addEventListener('click', toggleAuth);
 
+            authTabs.forEach((tab) => {
+                tab.addEventListener('click', () => setAuthTab(tab.dataset.authTab));
+            });
+
             continueGuestBtn.addEventListener('click', () => {
-                localStorage.removeItem('gondwa_current_user');
+                clearCurrentUser();
                 entries = JSON.parse(localStorage.getItem(guestKey)) || [];
-                updateAccountButton();
                 closeModal(authModal);
+                updateAccountButton();
                 render();
             });
 
-            authForm.addEventListener('submit', (event) => {
+            createAccountForm.addEventListener('submit', (event) => {
                 event.preventDefault();
 
-                const name = authNameInput.value.trim();
-                const email = authEmailInput.value.trim().toLowerCase();
-                const password = authPasswordInput.value.trim();
+                const name = document.getElementById('authName').value.trim();
+                const email = document.getElementById('createEmail').value.trim().toLowerCase();
+                const password = document.getElementById('createPassword').value.trim();
 
                 if (!name || !email || !password) {
-                    alert('Completa nombre, correo y contraseña para guardar tus entradas.');
+                    alert('Completa nombre, correo y contraseña para crear la cuenta.');
                     return;
                 }
 
-                const user = {
-                    provider: 'Local account',
+                const users = getUsers();
+                if (users[email]) {
+                    alert('Ya existe una cuenta con ese correo electrónico.');
+                    return;
+                }
+
+                users[email] = {
                     name,
                     email,
                     password
                 };
+                saveUsers(users);
 
-                localStorage.setItem('gondwa_current_user', JSON.stringify(user));
-                authForm.reset();
-                updateAccountButton();
+                setCurrentUser({ name, email, password });
+                createAccountForm.reset();
                 closeModal(authModal);
+                updateAccountButton();
 
                 const existingEntries = JSON.parse(localStorage.getItem(getStorageKey())) || [];
                 entries = existingEntries;
                 render();
             });
 
+            loginForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+                const password = document.getElementById('loginPassword').value.trim();
+
+                if (!email || !password) {
+                    alert('Introduce tu correo y contraseña.');
+                    return;
+                }
+
+                const users = getUsers();
+                const user = users[email];
+
+                if (!user || user.password !== password) {
+                    alert('Correo o contraseña incorrectos.');
+                    return;
+                }
+
+                setCurrentUser({ name: user.name, email: user.email, password: user.password });
+                loginForm.reset();
+                closeModal(authModal);
+                updateAccountButton();
+
+                const existingEntries = JSON.parse(localStorage.getItem(getStorageKey())) || [];
+                entries = existingEntries;
+                render();
+            });
+
+            zoomInBtn.addEventListener('click', zoomIn);
+            zoomOutBtn.addEventListener('click', zoomOut);
+            zoomResetBtn.addEventListener('click', resetZoom);
+
+            applyZoom();
             updateAccountButton();
             render();
         });
