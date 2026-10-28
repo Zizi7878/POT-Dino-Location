@@ -181,6 +181,15 @@
             cursor: grabbing;
         }
 
+        .map-layer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-origin: center center;
+            will-change: transform;
+            transition: transform 0.08s ease-out;
+        }
+
         .gondwa-map-img {
             display: block;
             width: auto;
@@ -189,8 +198,6 @@
             max-height: none;
             object-fit: none;
             transform-origin: center center;
-            transition: transform 0.08s ease-out;
-            will-change: transform;
             user-select: none;
             pointer-events: auto;
             cursor: grab;
@@ -582,7 +589,9 @@
                     <button type="button" class="zoom-btn" id="zoomOutBtn" aria-label="Zoom out">−</button>
                     <button type="button" class="zoom-btn" id="zoomResetBtn" aria-label="Reset zoom">↺</button>
                 </div>
-                <img src="./gondwa-map.jpg" alt="Mapa de Gondwa de Path of Titans" class="gondwa-map-img" id="gondwaMapImg">
+                <div class="map-layer" id="mapLayer">
+                    <img src="./gondwa-map.jpg" alt="Mapa de Gondwa de Path of Titans" class="gondwa-map-img" id="gondwaMapImg">
+                </div>
             </div>
         </div>
 
@@ -721,6 +730,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const mapContainer = document.getElementById('mapContainer');
             const mapViewport = document.getElementById('mapViewport');
+            const mapLayer = document.getElementById('mapLayer');
             const mapImg = document.getElementById('gondwaMapImg');
             const dinoSelect = document.getElementById('dinoSelect');
             const notesInput = document.getElementById('notesInput');
@@ -903,7 +913,7 @@
                     panY = clamp(panY, -maxPanY, maxPanY);
                 }
 
-                mapImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+                mapLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
             }
 
             function zoomIn() {
@@ -942,7 +952,7 @@
                         marker.style.top = `${entry.y}%`;
                         marker.style.backgroundColor = entry.color;
                         marker.title = `${entry.dino}${entry.notes ? `: ${entry.notes}` : ''}`;
-                        mapContainer.appendChild(marker);
+                        mapLayer.appendChild(marker);
 
                         const card = document.createElement('div');
                         card.className = 'entry-card';
